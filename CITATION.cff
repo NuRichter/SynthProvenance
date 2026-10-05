@@ -2,7 +2,7 @@ cff-version: 1.2.0
 message: "If you use SynthProvenance in research, please cite the software and the relevant foundational works."
 title: SynthProvenance
 version: 2.1.0
-abstract: "Scientific AI Content Signal & Image Provenance Laboratory: a local-first research workstation for measuring C2PA provenance, metadata, pixel integrity and candidate generative-image fingerprints, with a controlled surrogate watermark ground-truth laboratory."
+abstract: "Scientific AI Content Signal & Image Provenance Laboratory: a local-first research workstation for measuring C2PA provenance, metadata, pixel integrity and candidate generative-image fingerprints, with a controlled surrogate watermark ground-truth laboratory and a cross-detector research lab that compares an imported external-detector result against independent local evidence without declaring either system correct."
 authors:
   - name: "NuRichter Workspace / Insyide Innovations"
 license: see LICENSE

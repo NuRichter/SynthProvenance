@@ -17,6 +17,7 @@ from app.core import audit_engine as A
 from app.core import image_metrics
 from app.core.audit_engine import AuditLog
 from app.core.experiment_engine import Workspace
+from app.core.cross_detector_lab import CrossDetectorLab, ExternalDetectorGate, XD_PolicyError
 from app.core.fingerprint_lab import FingerprintLab
 from app.core.image_loader import open_image_bytes, set_max_megapixels, to_array
 from app.core.image_metrics import compute_statistics, strip_arrays
@@ -63,7 +64,8 @@ class AppController(QObject):
     toolsChanged = Signal()
     researchChanged = Signal()
     fingerprintChanged = Signal()
-    uiModeChanged = Signal(str)
+    easyChanged = Signal()
+    crossDetectorChanged = Signal()
 
     def __init__(self, settings: Settings | None = None) -> None:
         super().__init__()
@@ -84,6 +86,11 @@ class AppController(QObject):
         self.last_research_run = None
         self.last_fp_run = None
         self.last_composer = None
+        self.last_easy = None
+        self.last_external = None
+        self.last_xd_run = None
+        self.xd_gate = ExternalDetectorGate(opener=lambda url: QDesktopServices.openUrl(QUrl(url)),
+                                            reveal=lambda p: QDesktopServices.openUrl(QUrl.fromLocalFile(str(Path(p).parent))))
         self.last_benchmark: dict | None = None
         self.online_pending: dict | None = None
         self.online = OnlineGate(opener=lambda url: QDesktopServices.openUrl(QUrl(url)),
@@ -105,6 +112,7 @@ class AppController(QObject):
         self.registry = MethodRegistry(self.synthid.status(), self.last_benchmark)
         self.research = ResearchStore(self.workspace.root / "synthid_research")
         self.lab = FingerprintLab(self.workspace.root / "fingerprint_research")
+        self.cross_lab = CrossDetectorLab(self.workspace.root / "cross_detector")
         from app.core.research_assistant import ResearchAssistant
         from app.core.unified_signal_decomposition import UnifiedSignalDecomposition
 
@@ -650,6 +658,152 @@ class AppController(QObject):
         p = export_fingerprint_zip(self.lab, run, Path(dest))
         self.audit.log(A.FINGERPRINT_PAPER_EXPORTED, detail=f"{run_id} -> {p.name}")
         return f"Fingerprint paper export saved: {p}"
+
+    # ------------------------------------------------------------ Easy Mode
+    def easy_orchestrator(self):
+        """The Easy Mode orchestrator over this controller's engines (same workspace, audit, tools, registry)."""
+        from app.core.easy_mode_orchestrator import EasyModeOrchestrator
+
+        return EasyModeOrchestrator(self.workspace, self.audit, self.synthid, self.service,
+                                    exiftool_path=self.exiftool.path if self.exiftool.available else None,
+                                    c2patool_path=self.c2patool.path if self.c2patool.available else None,
+                                    use_c2pa_python=bool(self.settings.get("use_c2pa_python")) and self.c2pa_python.available,
+                                    registry=self.lab.registry, max_file_mb=float(self.settings.get("max_file_mb") or 4096))
+
+    def run_easy(self, request) -> bool:
+        return self._run("Easy Mode research pipeline", self._job_easy, self._on_easy, request)
+
+    def _job_easy(self, request, progress):
+        return self.easy_orchestrator().run(request, progress)
+
+    def _on_easy(self, res) -> None:
+        self.last_easy = res
+        self.easyChanged.emit()
+
+    def save_easy_result(self, dest: str):
+        from app.core.easy_mode_orchestrator import save_result
+
+        return save_result(self.last_easy, dest, self.audit)
+
+    # ------------------------------------------------------------ Cross-Detector Research Lab
+    def import_external_result(self, blob=None, fields=None, markdown=None, csv=None,
+                               detector: str = "TruthScan") -> bool:
+        from app.research.cross_detector import ExternalResult
+        try:
+            if blob is not None:
+                self.last_external = ExternalResult.from_json(blob, detector)
+            elif markdown is not None:
+                self.last_external = ExternalResult.from_markdown(markdown, detector)
+            elif csv is not None:
+                self.last_external = ExternalResult.from_csv(csv, detector)
+            else:
+                self.last_external = ExternalResult.from_fields(detector=detector, **(fields or {}))
+        except Exception as exc:  # noqa: BLE001
+            self.error.emit("Import external result", f"{type(exc).__name__}: {exc}")
+            return False
+        self.audit.log(A.EXTERNAL_CLASSIFICATION, detail=f"Imported {self.last_external.detector} result "
+                       f"'{self.last_external.final_result}' (USER-SUPPLIED)")
+        self.crossDetectorChanged.emit()
+        self.info.emit(f"Imported {self.last_external.detector} result (USER-SUPPLIED).")
+        return True
+
+    def run_cross_detector(self, ground_truth_level: int = 0, ground_truth_direction: str = "UNKNOWN",
+                           heatmap_path: str | None = None) -> bool:
+        img = self.research_image()
+        if img is None:
+            self.error.emit("No image", "Open an image first.")
+            return False
+        return self._run("Cross-detector research study", self._job_cross, self._on_cross, img,
+                         int(ground_truth_level), ground_truth_direction, heatmap_path)
+
+    def _job_cross(self, img, gt_level, gt_dir, heatmap_path, progress):
+        from app.core.easy_mode_orchestrator import EasyModeRequest
+        progress(5, "Running local research pipeline")
+        fmt = self.settings.get("easy_output_format") or "PNG"
+        res = self.easy_orchestrator().run(EasyModeRequest(str(img), fmt, save_report=False),
+                                           lambda p, _t: progress(5 + int(p * 0.8), "Local analysis"))
+        progress(90, "Comparing evidence")
+        local_maps = self._cross_local_maps(res)
+        run = self.cross_lab.record_study(img, res.to_dict(), self.last_external, gt_level, gt_dir,
+                                          Path(heatmap_path) if heatmap_path else None, local_maps)
+        self.audit.log(A.FINGERPRINT_RUN, detail=f"{run.run_id} CROSS-DETECTOR {run.outcome}; original unchanged "
+                       f"{run.original_unchanged}")
+        return run
+
+    def _cross_local_maps(self, easy_res) -> dict:
+        # reuse the figures the Easy run already wrote (FFT, residual, candidate) as local maps for heatmap overlap
+        maps = {}
+        try:
+            from app.core.image_loader import open_image_bytes
+            from app.research.imaging import as_float
+            for fig in (easy_res.figures or []):
+                pth = Path(fig.get("path", ""))
+                if pth.is_file():
+                    key = Path(fig["file"]).stem.split("_", 1)[-1]
+                    maps[key] = as_float(open_image_bytes(pth.read_bytes()))
+        except Exception:  # noqa: BLE001
+            pass
+        return maps
+
+    def _on_cross(self, run) -> None:
+        self.last_xd_run = run
+        self.crossDetectorChanged.emit()
+        self.info.emit(f"{run.run_id}: {run.outcome}")
+
+    def generate_hardcases(self, dest: str, n_each: int = 2) -> bool:
+        return self._run("Hard-case benchmark generation", self._job_hardcases, self._on_hardcases, dest, int(n_each))
+
+    def _job_hardcases(self, dest, n_each, progress):
+        from app.research import hardcases
+        progress(20, "Generating labelled benchmark")
+        return dest, hardcases.generate(dest, n_each=n_each)
+
+    def _on_hardcases(self, result) -> None:
+        dest, cases = result
+        self.info.emit(f"Generated {len(cases)} labelled hard-case images in {dest}")
+        self.crossDetectorChanged.emit()
+
+    def set_truthscan_mode(self, enabled: bool, confirmed: bool = False) -> None:
+        try:
+            if enabled:
+                self.xd_gate.enable(confirmed)
+            else:
+                self.xd_gate.disable()
+        except XD_PolicyError as exc:
+            self.error.emit("TruthScan integration", str(exc))
+            return
+        self.audit.log(A.ONLINE_MODE_CHANGED, detail="TruthScan browser hand-off "
+                       + ("ENABLED (no upload; browser only)" if enabled else "DISABLED"))
+        self.crossDetectorChanged.emit()
+
+    def truthscan_open(self, consent: bool) -> bool:
+        img = self.research_image()
+        if img is None:
+            self.error.emit("No image", "Open an image first.")
+            return False
+        try:
+            plan = self.xd_gate.plan(img)
+            self.xd_gate.execute(plan, consent)
+        except XD_PolicyError as exc:
+            self.error.emit("TruthScan integration", str(exc))
+            return False
+        self.audit.log(A.ONLINE_VERIFIER_OPENED, detail=f"TruthScan opened in browser for {plan.image_name} "
+                       f"sha256 {plan.image_sha256} (no upload by SynthProvenance)")
+        self.info.emit("Opened TruthScan in your browser. Upload manually, then IMPORT the result.")
+        self.crossDetectorChanged.emit()
+        return True
+
+    def export_cross_detector(self, run_id: str, dest: str) -> bool:
+        return self._run("Export cross-detector report", self._job_cross_export, lambda m: self.info.emit(m),
+                         run_id, dest)
+
+    def _job_cross_export(self, run_id, dest, progress):
+        from app.services.cross_detector_report import write_cross_detector_report
+        progress(30, "Writing report")
+        run = self.cross_lab.load(run_id)
+        write_cross_detector_report(run, self.cross_lab.run_dir(run_id) / "report", copy_to=dest)
+        self.audit.log(A.FINGERPRINT_PAPER_EXPORTED, detail=f"{run_id} cross-detector report -> {Path(dest).name}")
+        return f"Cross-detector report exported: {dest}"
 
     # ------------------------------------------------------------ desktop
     @staticmethod

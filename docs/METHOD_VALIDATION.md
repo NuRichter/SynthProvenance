@@ -46,3 +46,13 @@ unseen generators. Cross-generator generalisation requires researcher-supplied l
 confidence intervals, never as "works everywhere".
 
 See `docs/IMPLEMENTATION_GAP_ANALYSIS.md` for the per-method status table (regenerated from the live registry).
+
+## Upgrade v6 note
+
+The capability of every method is regenerated into `data/fingerprint_execution_matrix.json` and audited in
+`docs/UPGRADE_V6_IMPLEMENTATION_AUDIT.md` by `scripts/build_execution_matrix.py`. A method is classified ANALYSIS /
+ESTIMATION / SEPARATION / RECONSTRUCTION / VALIDATION strictly from the `_CAP_FLAGS` table in `app/research/methods.py`,
+not from its presence in any dropdown; `test_registry_capabilities_are_honest` enforces that a detector can never
+advertise separation. External research code is integrated only after the source/license/dependency/smoke/held-out
+checks listed above; see `docs/RESEARCH_SOURCES_V6.md`.
+

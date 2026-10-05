@@ -50,12 +50,11 @@ class FingerprintLabView(View):
     def __init__(self, ctl, win) -> None:
         super().__init__(ctl, win)
         self.registry = MethodRegistry()
-        ctl.uiModeChanged.connect(lambda _m: self._apply_mode())
-        # Easy Mode strip
+        # quick run: research goal -> preset method (Easy Mode itself is a separate application shell)
         self.easy = QWidget()
         el = QHBoxLayout(self.easy)
         el.setContentsMargins(0, 0, 0, 0)
-        el.addWidget(label("RESEARCH GOAL:", "PanelTitle"))
+        el.addWidget(label("QUICK RUN  \u00b7  RESEARCH GOAL:", "PanelTitle"))
         self.goal = QComboBox()
         self.goal.addItems(list(GOAL_METHOD))
         el.addWidget(self.goal)
@@ -485,17 +484,7 @@ class FingerprintLabView(View):
             self.comp_stages.set_data(["#", "Stage", "Energy", "Std", "Candidate vs known"],
                                       [[s["index"], s["label"], fmt_num(s["energy"], 6), fmt_num(s["std"], 4),
                                         fmt_num(s["candidate_vs_known_corr"], 4)] for s in comp.stages])
-        self._apply_mode()
 
-    def _apply_mode(self) -> None:
-        mode = str(self.ctl.settings.get("ui_mode") or "EASY").upper()
-        self.easy.setVisible(mode == "EASY")
-        # in EASY mode hide the expert-only tabs; keep Analysis, Separation, Experiments
-        expert_tabs = ("Surrogate Ground Truth", "Robustness", "Hypothesis Lab", "Method Composer",
-                       "Research Assistant", "Methods")
-        for i in range(self.tabs.count()):
-            if self.tabs.tabText(i) in expert_tabs:
-                self.tabs.setTabVisible(i, mode == "EXPERT")
 
     def _result_card(self, run) -> None:
         res = run.result or {}

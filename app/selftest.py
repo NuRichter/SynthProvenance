@@ -253,6 +253,82 @@ def run_self_test(output: str | None = None) -> int:
                 f"{len(GOALS)} goals, 30 languages (id/ar verified)")
     check("v4_integration", v4_integration)
 
+    def easy_mode_pipeline():
+        from app.core.easy_mode_orchestrator import EasyModeOrchestrator, EasyModeRequest, save_result
+        from app.research import procedural as PROC
+        from app.research.imaging import from_float
+
+        attempts0 = len(netguard.blocked_attempts())
+        ws = state["ws"]
+        src = Path(tmp) / "easy_input_scene.png"
+        from_float(PROC.scene(256, 320, seed=3)).save(src)
+        before = hashlib.sha256(src.read_bytes()).hexdigest()
+        orch = EasyModeOrchestrator(ws, AuditLog(), SynthIDEngine())
+        res = orch.run(EasyModeRequest(str(src), "WEBP", True))
+        assert res.ok, f"{res.status}: {res.error} {res.error_detail}"
+        assert [s.number for s in res.stages] == list(range(1, 13))
+        c = res.counts()
+        assert c["total"] == 64 and c["executed"] >= 25 and c["executed"] + c["insufficient"] + c["failed"] \
+            + c["skipped"] == 64
+        assert all(m.reason for m in res.methods if m.decision == "SKIP")
+        out = Path(res.output["path"])
+        open_image_bytes(out.read_bytes())
+        assert res.output["pixel_verdict"] == "PIXEL-EXACT" and out.suffix == ".webp"
+        assert hashlib.sha256(src.read_bytes()).hexdigest() == before and res.original_unchanged is True
+        assert Path(res.report_paths["html"]).is_file() and Path(res.report_paths["pdf"]).is_file()
+        assert res.controlled_case.get("valid_ground_truth") is True and res.candidates
+        assert all(c_.passed for c_ in res.candidates[:1]) or res.reconstruction_status == "NO VALIDATED RECONSTRUCTION"
+        saved = save_result(res, Path(tmp) / "easy_saved_result")
+        assert hashlib.sha256(saved.read_bytes()).hexdigest() == res.output["sha256"]
+        assert len(netguard.blocked_attempts()) == attempts0, netguard.blocked_attempts()[attempts0:]
+        return (f"{res.experiment_id} {res.status}: 12 stages, {c['executed']} methods executed, {c['skipped']} skipped "
+                f"with reasons, {len(res.candidates)} candidates, reconstruction {res.reconstruction_status}, WEBP "
+                f"{res.output['pixel_verdict']}, original unchanged, report written, 0 network attempts")
+    check("easy_mode_pipeline", easy_mode_pipeline)
+
+    def cross_detector_lab():
+        from app.core.cross_detector_lab import CrossDetectorLab, ExternalDetectorGate, benchmark_row
+        from app.core.easy_mode_orchestrator import EasyModeOrchestrator, EasyModeRequest
+        from app.research import cross_detector as XD
+        from app.research import hardcases
+        from app.research import procedural as PROC
+        from app.research.imaging import from_float
+
+        attempts0 = len(netguard.blocked_attempts())
+        ws = state["ws"]
+        src = Path(tmp) / "xd_scene.png"
+        from_float(PROC.scene(224, 288, seed=9)).save(src)
+        before = hashlib.sha256(src.read_bytes()).hexdigest()
+        easy = EasyModeOrchestrator(ws, AuditLog(), SynthIDEngine()).run(EasyModeRequest(str(src), "PNG", False))
+        assert easy.ok, easy.error
+        ext = XD.ExternalResult.from_json({"result": {"final_result": "AI Generated", "confidence": 0.97,
+                                                       "detection_step": 3}})
+        assert ext.direction == XD.LEANS_SYNTHETIC and ext.detection_step == 3
+        lab = CrossDetectorLab(ws.root / "cross_detector")
+        run = lab.record_study(src, easy.to_dict(), ext, ground_truth_level=5, ground_truth_direction=XD.LEANS_SYNTHETIC)
+        assert run.original_unchanged is True and run.scorecard["combined_score"] is None
+        assert run.comparison["external_vs_truth"] == "matches the known ground truth"
+        row = benchmark_row(run)
+        assert "FINAL RESEARCH STATUS" in row and "LEVEL 5" in row["GROUND TRUTH"]
+        from app.services.cross_detector_report import write_cross_detector_report
+        paths = write_cross_detector_report(run, lab.run_dir(run.run_id) / "report")
+        html = Path(paths["html"]).read_text(encoding="utf-8")
+        assert "USER-SUPPLIED" in html and "defeated" not in html.lower() and "more accurate" not in html.lower()
+        cases = hardcases.generate(Path(tmp) / "xd_bench", n_each=1, seed=9)
+        assert len(cases) == 6 and any("NOT a real photograph" in c.notes for c in cases)
+        gate = ExternalDetectorGate(opener=lambda u: True)
+        try:
+            gate.plan(src)
+            raise AssertionError("gate was not OFF by default")
+        except Exception as exc:  # noqa: BLE001
+            assert "OFF" in str(exc)
+        assert hashlib.sha256(src.read_bytes()).hexdigest() == before
+        assert len(netguard.blocked_attempts()) == attempts0, netguard.blocked_attempts()[attempts0:]
+        return (f"{run.run_id} {run.outcome}: external imported (USER-SUPPLIED), local evidence vs TruthScan compared, "
+                f"ground truth LEVEL 5 ({run.comparison['external_vs_truth']}), scorecard not collapsed, "
+                f"{len(cases)} hard cases, hand-off OFF by default, original unchanged, 0 network attempts")
+    check("cross_detector_lab", cross_detector_lab)
+
     passed = all(c["passed"] for c in checks)
     result = {"passed": passed, "version": app.__version__, "python": sys.version.split()[0],
               "platform": platform.platform(), "frozen": bool(getattr(sys, "frozen", False)),

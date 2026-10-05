@@ -11,5 +11,10 @@
   "default_sanitize_profile": "BALANCED",
   "network_access": "DISABLED",
   "language": "en",
-  "ui_mode": "EASY"
+  "ui_mode": "EASY",
+  "easy_output_format": "PNG",
+  "easy_save_report": true,
+  "easy_report_dir": "",
+  "truthscan_integration": false,
+  "theme": "Dark Laboratory"
 }

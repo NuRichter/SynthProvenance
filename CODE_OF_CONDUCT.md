@@ -3,6 +3,12 @@
 SynthProvenance is a research instrument of the NuRichter Workspace research group. Everyone who uses, studies or
 contributes to it is expected to uphold both professional conduct and research integrity.
 
+## Research integrity with external detectors
+
+- Treat an external detector's result as evidence to study, not as ground truth, and label it as user-supplied.
+- Never state that an external detector was "defeated" or that SynthProvenance is "more accurate"; report an evidence profile under the tested condition and name the ground-truth level.
+- Do not use the tool to automate attacks on, or evasion of, any external service.
+
 ## Professional conduct
 
 - Be respectful and constructive. Harassment, discrimination or personal attacks are not tolerated.

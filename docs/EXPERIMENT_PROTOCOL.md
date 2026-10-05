@@ -13,6 +13,7 @@
    the platform.
 6. **Measure.** Review Signal Separation (seven layers), Pixel Integrity, Comparison (side-by-side, overlay, blink,
    difference, heatmap with pixel inspector) and the Experiment Matrix.
+7. **Cross-detector (optional).** In the TruthScan Cross-Detector Lab, import an external detector's result (user-supplied; nothing is uploaded), set the ground-truth level, and RUN CROSS-DETECTOR STUDY to compare it with SynthProvenance's independent evidence. Read Agreement / Disagreement and export the Cross-Detector Research Report. See `docs/CROSS_DETECTOR_RESEARCH.md`.
 7. **Report.** Export PDF/JSON/CSV/HTML/PNG and `experiment.zip`. Verify the bundle with `hashes.txt`.
 8. **Replicate.** Repeat on independent images. Record library versions from Reproducibility Information, because codec
    builds influence lossy results.

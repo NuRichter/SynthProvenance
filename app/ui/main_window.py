@@ -12,6 +12,7 @@ from app.ui.theme import mono_font
 from app.ui.views.about_view import AboutView
 from app.ui.views.c2pa_view import C2PAView
 from app.ui.views.comparison_view import ComparisonView
+from app.ui.views.cross_detector_view import CrossDetectorView
 from app.ui.views.dashboard import DashboardView
 from app.ui.views.fingerprint_view import FingerprintLabView
 from app.ui.views.format_lab import FormatLabView
@@ -31,6 +32,7 @@ from app.utils.paths import resource_path
 
 NAV = [("Dashboard", DashboardView), ("Forensic Inspector", InspectorView), ("C2PA Provenance", C2PAView),
        ("SynthID Research Lab", SynthIDResearchLabView), ("Fingerprint Research Lab", FingerprintLabView),
+       ("TruthScan Cross-Detector Lab", CrossDetectorView),
        ("Fingerprint Taxonomy", TaxonomyView), ("Research Library", ResearchLibraryView),
        ("Signal Separation", SignalSeparationView), ("Transformation Lab", TransformationLabView),
        ("Format Conversion", FormatLabView), ("Pixel Integrity", IntegrityView), ("Comparison", ComparisonView),
@@ -166,14 +168,19 @@ class MainWindow(QMainWindow):
             a.setShortcut(f"Ctrl+{i + 1}" if i < 9 else "")
             a.triggered.connect(lambda _c=False, n=name: self.go(n))
             v.addAction(a)
+        v.addSeparator()
+        sw = QAction("Switch to Easy Mode (save && restart)...", self)
+        sw.triggered.connect(self.switch_to_easy)
+        v.addAction(sw)
         r = self.menuBar().addMenu("&Research")
         wiz = QAction("Research Wizard...", self)
         wiz.setShortcut("Ctrl+W")
         wiz.triggered.connect(self.open_wizard)
         r.addAction(wiz)
         for text, nav_name in (("Fingerprint Research Lab", "Fingerprint Research Lab"),
+                               ("TruthScan Cross-Detector Lab", "TruthScan Cross-Detector Lab"),
                                ("Fingerprint Taxonomy", "Fingerprint Taxonomy"),
-                               ("Research Library (HERE OUR HERO)", "Research Library")):
+                               ("Research Foundations (HERE OUR HERO)", "Research Library")):
             a = QAction(text, self)
             a.triggered.connect(lambda _c=False, n=nav_name: self.go(n))
             r.addAction(a)
@@ -184,6 +191,15 @@ class MainWindow(QMainWindow):
         a2 = QAction("About (dialog)", self)
         a2.triggered.connect(self._about)
         h.addAction(a2)
+
+    def switch_to_easy(self) -> None:
+        from app.ui.app_mode import save_and_restart
+        from app.ui.easy.dialogs import confirm_restart
+
+        if confirm_restart(self, "EASY"):
+            ok, msg = save_and_restart(self.ctl, "EASY")
+            if not ok:
+                self._error("Application mode", msg)
 
     def open_wizard(self) -> None:
         from app.ui.wizard import ResearchWizard

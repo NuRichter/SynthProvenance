@@ -23,7 +23,13 @@ DEFAULTS = {
     "network_access": "DISABLED",
     "language": "en",
     "ui_mode": "EASY",
+    "easy_output_format": "PNG",
+    "easy_save_report": True,
+    "easy_report_dir": "",
+    "truthscan_integration": False,
+    "theme": "Dark Laboratory",
 }
+UI_MODES = ("EASY", "EXPERT")
 
 
 class Settings:
@@ -53,6 +59,10 @@ class Settings:
             raise KeyError(key)
         with self._lock:
             self.data[key] = value
+
+    def ui_mode(self) -> str:
+        mode = str(self.get("ui_mode") or "EASY").upper()
+        return mode if mode in UI_MODES else "EASY"
 
     def save(self) -> None:
         with self._lock:

@@ -30,7 +30,7 @@
 18. [Skenario N — Fingerprint Taxonomy browser](#18-skenario-n--fingerprint-taxonomy-browser)
 19. [Skenario O — Research Library & HERE OUR HERO](#19-skenario-o--research-library--here-our-hero)
 20. [Skenario P — About, ISO-5807 workflow, ISO 25010](#20-skenario-p--about-iso-5807-workflow-iso-25010)
-21. [Skenario Q — Easy Mode vs Expert Mode](#21-skenario-q--easy-mode-vs-expert-mode)
+21. [Skenario Q — Easy Mode (PILIH → RUN → OUTPUT) vs Expert Mode](#21-skenario-q--easy-mode-pilih--run--output-vs-expert-mode)
 22. [Skenario R — Research Wizard (7 langkah)](#22-skenario-r--research-wizard-7-langkah)
 23. [Skenario S — Transformation/Format/Sanitization & Pixel Integrity](#23-skenario-s--transformationformatsanitization--pixel-integrity)
 24. [Skenario T — Paper Export & reprodusibilitas](#24-skenario-t--paper-export--reprodusibilitas)
@@ -82,8 +82,9 @@ Setiap skenario di bawah tunduk pada aturan ini (inilah yang membuat alurnya sep
 ```
                          ┌─────────────────────────────────────────────┐
                          │                 app/ui (PySide6)             │
-                         │  MainWindow · 16 views · splash · wizard     │
-                         │  Settings (bahasa, mode)                     │
+                         │  EXPERT: MainWindow · 16 views · wizard      │
+                         │  EASY:   EasyWindow (01 PILIH·02 RUN·03 OUTPUT)│
+                         │  splash · Settings (bahasa, APPLICATION MODE)│
                          └───────────────┬─────────────────────────────┘
                                          │ sinyal Qt (busy, progress, *Changed)
                          ┌───────────────▼─────────────────────────────┐
@@ -150,7 +151,10 @@ Jalankan EXE
         Checking GPU                 → nvidia-smi (hanya untuk catatan)
         Checking external tools      → ExifTool/c2patool/c2pa-python (opsional)
         Checking experiment workspace→ path workspace
-  → MainWindow.show() → splash.finish(win)
+  → baca Settings.ui_mode (EASY default; --ui-mode easy|expert hanya untuk sesi itu)
+       EASY   → tema terang Easy + EasyWindow (shell aplikasi terpisah, 3 langkah)
+       EXPERT → tema gelap konsol riset + MainWindow (16 view)
+  → window.show() → splash.finish(win)
 ```
 Catatan: progres **tidak dipalsukan** — tiap langkah cek beneran dan menampilkan hasil (✓/✕ + durasi ms).
 
@@ -404,15 +408,187 @@ Teks di UI: "Workflow notation follows ISO 5807 conventions" + "reference mappin
 
 ---
 
-## 21. Skenario Q — Easy Mode vs Expert Mode
+## 21. Skenario Q — Easy Mode (PILIH → RUN → OUTPUT) vs Expert Mode
+
+Dua **shell aplikasi yang berbeda** di atas **mesin riset yang sama** (tidak ada implementasi ilmiah ganda):
 
 ```
-Settings > UI mode:
-  EASY   → strip "RESEARCH GOAL → ANALYZE → RUN" muncul; tab expert disembunyikan
-           (hanya Analysis, Separation, Experiments terlihat)
-  EXPERT → semua tab muncul (Surrogate, Robustness, Hypothesis, Composer, Assistant, Methods)
+                    CORE ENGINES (metadata/C2PA, SynthID analyzer, method runner 64 metode,
+                    separation, format conversion + pixel integrity, report renderers)
+                                   │
+                ┌──────────────────┴──────────────────┐
+                │                                     │
+   app/core/easy_mode_orchestrator.py       AppController (Expert actions)
+                │                                     │
+          EasyWindow (Easy)                   MainWindow (Expert)
 ```
-Easy Mode = alur 6 langkah: DROP IMAGE → ANALYZE → SELECT GOAL → RUN → COMPARE → EXPORT.
+
+### Ganti mode = ganti layout aplikasi (SAVE & RESTART)
+
+```
+Expert: Settings > User Interface Mode > APPLICATION MODE ( ) Easy Mode ( ) Expert Mode
+        atau menu View > "Switch to Easy Mode (save & restart)..."
+Easy:   tombol ⚙ Settings > APPLICATION MODE
+  → muncul "Your interface mode will change after restart."   [SAVE & RESTART] [CANCEL]
+  → SAVE & RESTART: simpan ui_mode ke settings.json → start instance baru (detached, EXE yang sama;
+    --workspace sesi ikut) → tutup instance lama → instance baru membuka shell sesuai mode
+  → ditolak bila ada operasi berjalan; bila relaunch gagal: mode tetap tersimpan + pesan jelas
+```
+Easy Mode **bukan** Expert yang tab-nya disembunyikan: Fingerprint Lab di Expert kini selalu menampilkan semua tab
+(strip lama "RESEARCH GOAL → RUN" menjadi **QUICK RUN** khusus Expert).
+
+### Easy Mode — tiga langkah saja
+
+```
+01 · PILIH   "Pilih gambar yang ingin diteliti."
+    ├─ area besar DROP GENERATIVE IMAGE HERE (drag & drop / klik / Enter) + tombol CHOOSE IMAGE
+    ├─ fakta file saja: Selected file · Resolution · Format (dari magic bytes) · File size
+    │   (TIDAK ada metadata, C2PA, SynthID, hash, metode, istilah riset)
+    ├─ OUTPUT FORMAT: PNG / JPG / WEBP / TIFF / BMP (default PNG) — "Pilih format hasil."
+    ├─ RESEARCH REPORT: [✓] Save research report · lokasi opsional (default: folder eksperimen)
+    └─ CONTINUE (selalu terlihat di action bar bawah)
+
+02 · RUN     READY TO ANALYZE → [ RUN TRANSFORMATION ] → "RUNNING..." (disabled)
+    ├─ ANALYZING YOUR IMAGE + progress bar + 5 kata saja:
+    │     Preparing · Analyzing · Reconstructing · Validating · Finalizing
+    ├─ LOCAL RESEARCH ENVIRONMENT: CPU threads · GPU (nama atau "not detected"; engine jalan di CPU)
+    └─ Error: "Something went wrong." + DETAILS (opsional, tersembunyi) + TRY AGAIN / BACK
+       (tidak pernah traceback Python mentah)
+
+03 · OUTPUT  ✓ RESULT READY
+    ├─ preview besar RESULT IMAGE · "PNG · 1536 × 2048" · PIXEL STATUS (✓ VERIFIED / ≈ LOSSY · PSNR / ...)
+    ├─ SAVE RESULT (dialog simpan; menolak menimpa file asli) · OPEN RESULT · OPEN REPORT · RUN ANOTHER
+    ├─ 3 kartu kecil: IMAGE (resolusi, format, pixel status) · PROVENANCE (C2PA, SynthID)
+    │                 · RESEARCH (methods executed, methods unavailable, experiment ID)
+    ├─ bila ada metode gagal: "Some research methods were unavailable. The experiment continued using
+    │   the validated methods that were available."
+    └─ VIEW RESEARCH DETAILS → viewer detail gaya Expert (Summary, Methods 64, Reconstruction candidates,
+       Controlled case, Provenance, Fingerprint families, Pipeline) TANPA pindah ke Expert Mode
+Step indicator selalu tepat 3: 01 aktif → 01 ✓ 02 aktif → 01 ✓ 02 ✓ 03 aktif (simbol + teks, bukan warna saja).
+RUN ANOTHER → kembali ke 01 PILIH dengan state bersih, tanpa restart.
+```
+
+### Pipeline internal (EasyModeOrchestrator) — deterministik, 12 stage
+
+```
+01 Safety        read_file_bytes: magic bytes (ekstensi tak dipercaya), batas ukuran & memori   [KRITIS]
+02 Baseline      SHA-256 + BLAKE3 file, decode (open_image_bytes), pixel SHA-256                [KRITIS]
+03 Metadata      analyze_bytes (EXIF/XMP/IPTC/ICC/...), buat eksperimen SPX-YYYY-MMDD-NNNNNN,
+                 original disalin ke experiments/<ID>/original/ ; Method 01 = engine native    [KRITIS]
+04 C2PA          parse JUMBF/CBOR + hard binding; validator lokal opsional; dipisah dari piksel (Method 02)
+05 SynthID       analyze_synthid → hanya engine LOKAL; tanpa engine = UNAVAILABLE; TIDAK PERNAH online
+06 Fingerprint   taxonomy matching (kode "taxonomy 3A" dst. → 17 famili di DB taksonomi) +
+                 17 metode analisis pada tile pusat resolusi native ≤1024 px (tanpa resampling,
+                 origin sejajar grid 16 px untuk blok JPEG)
+07 Signal        metode frontier deskriptif (56, 58, 61, 62) pada gambar nyata — tidak ada yang dihapus
+08 Separation    CONTROLLED SURROGATE: tile ≤512 px = host bersih → sinyal surrogate berkunci
+                 (spatial, strength 3, key 20261005) → detektor harus valid (clean tidak terdeteksi,
+                 embedded terdeteksi) → 34–38, 41, 42, 55, 59, 60 diskor terhadap ground truth
+09 Consensus     ringkasan per famili, Method 54 (meta) dengan hasil nyata, Method 61 (disagreement),
+                 agreement antar kandidat (korelasi rata-rata peta kandidat)
+10 Validation    re-hash original (berubah → STOP) + evaluator kandidat                          [KRITIS]
+11 Output        format_conversion (engine Transformation yang sama): PNG/WEBP/TIFF/BMP LOSSLESS,
+                 JPG LOSSY q95; ICC + EXIF/XMP dibawa; C2PA tidak bisa valid utk byte baru → tidak
+                 disalin; verifikasi piksel vs original; output harus bisa di-decode            [KRITIS]
+12 Report        HTML + PDF + JSON (renderer report_service) + figur; salin ke lokasi pilihan bila ada
+Selalu: easy_mode_run.json (rekam lengkap) di folder eksperimen; audit log per stage.
+```
+
+**Dua arm yang tidak pernah dicampur** (tercatat di setiap metode & di laporan):
+
+- **REAL IMAGE OBSERVATION** — gambar pengguna hanya **diamati** (metadata, C2PA, status SynthID lokal, statistik
+  fingerprint deskriptif). Tidak ada sinyal yang diestimasi keluar atau dihapus dari gambar nyata. **Gambar hasil =
+  re-encode piksel-preserving dari original** dalam format terpilih, terverifikasi (PIXEL-EXACT untuk format lossless).
+- **CONTROLLED SURROGATE RESEARCH** — rekonstruksi/separasi hanya pada host + sinyal surrogate berkunci lokal yang
+  ground truth-nya diketahui. Hasilnya **pengukuran di laporan**, tidak pernah menjadi gambar hasil, dan tidak
+  digeneralisasi ke SynthID/watermark nyata.
+
+**Method suitability engine** (`EasyModeOrchestrator.plan`) memutuskan untuk SETIAP metode (64): RUN atau SKIP +
+alasan, dengan faktor format, resolusi, model, dependency, ground truth, GPU, maturity, kapabilitas analyze/reconstruct:
+
+| Status skip | Contoh |
+|---|---|
+| UNAVAILABLE | DIRE, AEROBLADE, CLIP/ViT/DINO, DNA-Det, causal (model/runtime DL tidak terpasang) |
+| NOT IMPLEMENTED | Method 43–46 (detector evasion — sengaja di luar scope) |
+| REQUIRES DATA | 04, 25, 30, 57 (butuh gambar referensi / set terkendali) |
+| INCOMPATIBLE | 18 Benford-DCT untuk input non-JPEG; arm terkendali bila gambar < 128 px |
+| EXPERT ONLY | robustness (39, 40, 63) & Hypothesis Lab (47–52) — bukan bagian pipeline Easy |
+| REDUNDANT | 53 Ensemble (anggotanya dijalankan satu per satu) |
+
+Metode dengan implementasi & input identik (mis. 03/12/17/21 = residual, 13/16 = FFT, 35/41, 38/42) dieksekusi
+**sekali**; recordnya menyatakan "shared execution with Method X". Eksekusi paralel (thread pool) tapi urutan
+rekaman tetap deterministik.
+
+**Evaluator kandidat** (tidak memilih yang pertama): gate validasi = recovery corr ≥ 0.30, SSIM ≥ 0.90,
+PSNR ≥ 32 dB, resolusi sama, metrik finite. Skor = signal consistency 0.30 + perceptual fidelity 0.20 + pixel
+integrity 0.15 + method agreement 0.15 + research validity (maturity) 0.10 + resolution 0.05 + runtime 0.05.
+Skor detektor surrogate **dicatat tapi tidak dipakai untuk ranking** (bukan pencarian evasion). Kandidat lolos
+selalu di atas yang gagal; bila tak ada yang lolos → **NO VALIDATED RECONSTRUCTION** (laporan tetap ditulis).
+
+**Penanganan kegagalan:** metode yang gagal → FAILED + detail, run lanjut; stage non-kritis gagal → dicatat,
+metode di stage itu "NOT RUN", run lanjut (status COMPLETE WITH WARNINGS). Berhenti hanya bila sumber tak bisa
+dibaca/di-decode, output tidak valid, atau integritas original gagal — dengan kalimat ramah, detail teknis opsional.
+
+**Laporan Easy** (`app/services/easy_report.py`): Experiment ID, input/output + hash, resolusi, format, pixel
+integrity, C2PA, SynthID, famili fingerprint, metode executed/skipped/failed, kasus terkendali, kandidat + metrik,
+konsensus, stage pipeline, limitations, research notes, source references, figur.
+
+**Pengaturan Easy minimal:** Language · Mode · Default output format · Report on/off · Default report location.
+
+**Aksesibilitas:** semua kontrol bisa di-Tab; Enter = aksi utama langkah (CONTINUE / RUN / SAVE), Escape = BACK;
+Ctrl+O pilih gambar, Ctrl+S simpan hasil; ring fokus biru 3 px; target klik ≥ 44–68 px; teks kontras tinggi;
+accessible name di setiap tombol/area; status tidak hanya warna (✓ ● ○ ≈ + teks); layout RTL untuk ar/fa/ur.
+
+---
+
+## 21b. Skenario Q2 — TruthScan Cross-Detector Lab (Expert)
+
+SynthProvenance = **sistem forensik independen**; TruthScan = **detektor eksternal** yang hasilnya *diimpor*
+(user-supplied), dipelajari, **bukan** dijadikan ground truth, dan **tidak pernah** diunggah oleh aplikasi.
+
+```
+GAMBAR
+  → baseline lokal, C2PA, metadata, taksonomi, analisis SynthProvenance (lokal, otomatis)
+  → OPSIONAL hasil TruthScan user-supplied (impor JSON / entri manual / hand-off browser consent-gated)
+  → mesin perbandingan → analisis disagreement → laporan cross-detector
+```
+
+**Impor (default, lokal penuh):** tab External Result → tempel JSON / Load JSON / entri manual (final label,
+confidence, detection_step 1/2/3). Hasil ditandai `SOURCE = EXTERNAL / USER-SUPPLIED` (+ submission id, timestamp,
+file hash bila ada). Parser toleran terhadap beberapa ejaan field; seluruh blob disimpan di `raw`. *Field harus
+diverifikasi ulang ke dokumentasi TruthScan terkini.*
+
+**Hand-off browser (OFF default, consent-gated):** seperti SynthID online — buka `truthscan.com` di browser +
+reveal file di Explorer setelah konfirmasi sesi + consent per-buka; peneliti mengunggah sendiri; aplikasi
+TIDAK pernah mengunggah (`uploaded_by_synthprovenance: false`; host allow-listed https).
+
+**Evidence lokal = deskriptif.** SynthProvenance tidak pernah memberi verdict "AI vs manusia" dari piksel. Tiap
+dimensi bukti bisa *condong* (provenance C2PA kamera / deklarasi AI di metadata) tapi mayoritas `DESCRIPTIVE`.
+Dipetakan ke 7 keluarga taksonomi (INTRINSIC / CAUSAL / SPECTRAL / PROACTIVE / DETECTOR REPRESENTATION /
+RECONSTRUCTION / PROVENANCE) via **Evidence Mapper** (EVIDENCE-### + family + representasi + metode + referensi +
+ground truth + status validasi).
+
+**Outcome perbandingan:** `AGREEMENT` / `PARTIAL AGREEMENT` / `DISAGREEMENT` / `INSUFFICIENT EVIDENCE`. **Tidak
+pernah** menyebut detektor eksternal "salah" atau SynthProvenance "benar". Pernyataan "matches / does not match"
+hanya saat **ground-truth LEVEL ≥ 3**, dan itu tentang label eksternal vs ground truth — bukan vonis atas sistem.
+
+**Hierarki ground truth (Section 8):** LEVEL 0 unknown · 1 observer-reported · 2 known generator+dataset ·
+3 locally generated controlled · 4 known watermark/fingerprint GT · 5 reproducible synthetic benchmark.
+
+**Scorecard independen (9 dimensi)** TIDAK pernah digabung jadi satu "truth score". **Heatmap**: impor heatmap
+TruthScan → bandingkan IoU/Dice/korelasi dengan peta lokal (FFT/residual/rekonstruksi); overlap ≠ kebenaran.
+**Hard-case generator**: benchmark lokal reproducible berlabel ground truth (sintetis, +surrogate watermark,
+edited, upscaled, dan *natural-like control* yang JELAS ditandai BUKAN foto nyata). **Benchmark matrix** → CSV
+(IMAGE/GROUND TRUTH/TRUTHSCAN/SYNTHPROVENANCE/C2PA/METADATA/SPECTRAL/RECONSTRUCTION/FINGERPRINT/FINAL STATUS).
+
+**Store:** run `SPX-XD-YYYYMMDD-NNNNNN` di `<workspace>/cross_detector/<ID>/` (run.json, inputs/, external/,
+report/, logs/); original di-hash sebelum & sesudah (`original_unchanged`). **Laporan** 14 bagian (HTML/PDF/JSON)
++ matrix CSV. **Batas (sama dengan [[synthprovenance-redteam-scope]]):** tidak ada optimizer detector-evasion
+(Method 43–46 tetap NOT_IMPLEMENTED); tidak ada auto-upload/auto-submit; tidak klaim transfer surrogate→TruthScan.
+Doc: `docs/CROSS_DETECTOR_RESEARCH.md`, `docs/TRUTHSCAN_RESEARCH.md`, `docs/FINGERPRINT_EVIDENCE_MODEL.md`.
+
+Motto lab: **ONE DETECTOR IS AN OPINION. MULTIPLE INDEPENDENT MEASUREMENTS CREATE EVIDENCE. — WE DO NOT GUESS.
+WE MEASURE. WE CHALLENGE. WE REPRODUCE. WE DOCUMENT.**
 
 ---
 
@@ -470,7 +646,9 @@ Settings > Language → set_active(code) → MainWindow.retranslate() (label nav
    Istilah teknis/nama metode tetap English (istilah kanonik dipertahankan)
    RTL untuk ar/fa/ur; tiap locale punya _meta.complete (kelengkapan)
 ```
-Translasi inti dibangkitkan `scripts/build_i18n.py`. Indonesian paling lengkap (~95%).
+Translasi inti dibangkitkan `scripts/build_i18n.py`. Shell Easy Mode (85 string: PILIH/RUN/OUTPUT, tombol, fase,
+pesan error, settings, mode) **lengkap di 30 bahasa** (`scripts/i18n_easy.py`, divalidasi placeholder & jumlahnya);
+bahasa Indonesia memakai nama langkah proyek PILIH · RUN · OUTPUT. Ganti bahasa di Easy Settings berlaku langsung.
 
 ---
 
@@ -495,11 +673,16 @@ build.bat → scripts/build.py (8 stage):
   [4/8] validasi sumber         [5/8] pytest penuh            [6/8] PyInstaller (one-folder, windowed)
   [7/8] verifikasi EXE          [8/8] siapkan distribusi (assets/config/data/i18n, BUILD_INFO, SHA256SUMS)
 Verifikasi stage 7 MENJALANKAN EXE:
-  SynthProvenance.exe --self-test   (9 cek, termasuk fingerprint lab & v4_integration)
-  SynthProvenance.exe --smoke-gui   (16 view render, run fingerprint + SynthID, 0 network attempt)
+  SynthProvenance.exe --self-test   (10 cek, termasuk fingerprint lab, v4_integration, easy_mode_pipeline)
+  SynthProvenance.exe --smoke-gui   (Expert: 16 view render, run fingerprint + SynthID, 0 network attempt)
+  SynthProvenance.exe --smoke-easy --smoke-restart-to EXPERT --smoke-restart-ack <file>
+                                    (Easy: PILIH → RUN TRANSFORMATION → OUTPUT lewat widget asli, SAVE RESULT,
+                                     RUN ANOTHER, lalu SAVE & RESTART → EXE baru harus membuka MainWindow/EXPERT)
 Output: dist\SynthProvenance\SynthProvenance.exe
 ```
-Status terakhir: **115 tes lulus, 1 skip**; self-test & smoke exit 0; EXE v2.1.0 terverifikasi.
+Status terakhir: **154 tes lulus, 1 skip** (26 tes Easy Mode + 13 tes Cross-Detector baru); self-test (11 cek, +easy_mode_pipeline +cross_detector_lab), smoke Expert (17 view termasuk TruthScan Cross-Detector Lab), smoke Easy +
+SAVE & RESTART exit 0; EXE v2.1.0 terverifikasi, plus uji GUI nyata via Windows UI Automation (Expert → Easy → PILIH →
+RUN → OUTPUT → SAVE RESULT → Easy → Expert).
 
 ---
 
@@ -508,6 +691,7 @@ Status terakhir: **115 tes lulus, 1 skip**; self-test & smoke exit 0; EXE v2.1.0
 | Hal | Format / lokasi |
 |---|---|
 | Experiment utama | `SPX-YYYY-MMDD-NNNNNN` → `<workspace>/experiments/<ID>/` |
+| Run Easy Mode | eksperimen yang sama + `easy_mode_run.json`, `output/T001_format_conversion.<ext>`, `report/<ID>_easy_research_report.{html,pdf,json}` + `report/figures/` |
 | SynthID research run | `SPX-SID-YYYYMMDD-NNNNNN` → `<workspace>/synthid_research/<ID>/` |
 | Fingerprint lab run | `SPX-FP-YYYYMMDD-NNNNNN` → `<workspace>/fingerprint_research/<ID>/` |
 | Peta/maps | PNG di `maps/` (viridis; simetris untuk candidate/residual/difference) |

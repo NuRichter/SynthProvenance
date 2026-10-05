@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from PySide6.QtWidgets import QCheckBox, QComboBox, QFileDialog, QFormLayout, QHBoxLayout, QLineEdit, QSpinBox
+from PySide6.QtWidgets import (QButtonGroup, QCheckBox, QComboBox, QFileDialog, QFormLayout, QHBoxLayout, QLineEdit,
+                               QRadioButton, QSpinBox)
 
 from app.services.metadata_sanitizer import PROFILES
 from app.ui.views.base import View, row
@@ -71,16 +72,49 @@ class SettingsView(View):
         self.lang.setToolTip("UI language. Technical and method names stay in English (canonical term preserved); "
                              "untranslated labels fall back to English.")
         self.lang.currentIndexChanged.connect(self._change_language)
-        self.mode = QComboBox()
-        self.mode.addItems(["EASY", "EXPERT"])
-        self.mode.setToolTip("EASY: drop image, pick a research goal, run. EXPERT: full method/parameter control.")
-        self.mode.currentTextChanged.connect(self._change_mode)
+        from app.ui.themes import THEME_NAMES
+        self.theme = QComboBox()
+        self.theme.addItems(list(THEME_NAMES))
+        self.theme.setToolTip("Colour theme (presentation only; applied immediately). Easy Mode uses its own light look.")
+        self.theme.currentTextChanged.connect(self._change_theme)
+        lf.addRow("Theme", self.theme)
         lf.addRow("Language", self.lang)
-        lf.addRow("UI mode", self.mode)
+        from app.core.easy_mode_orchestrator import OUTPUT_FORMATS
+        self.easy_fmt = QComboBox()
+        self.easy_fmt.addItems(list(OUTPUT_FORMATS))
+        self.easy_report = QCheckBox("Save research report")
+        self.easy_dir = QLineEdit()
+        self.easy_dir.setPlaceholderText("empty = the experiment folder")
+        lf.addRow("Easy Mode default output format", self.easy_fmt)
+        lf.addRow("Easy Mode research report", self.easy_report)
+        lf.addRow("Easy Mode default report location", _path_row(self.easy_dir, self, directory=True))
+        b_easy = button("Save Easy Mode defaults")
+        b_easy.clicked.connect(self._save_easy_defaults)
+        lf.addRow("", row(b_easy, None))
         lang_panel.add(lf)
         self.lang_note = label("", "Muted", wrap=True)
         lang_panel.add(self.lang_note)
         self.root.addWidget(lang_panel)
+        # APPLICATION MODE: a true application-layout switch (persist, close, relaunch into the other shell)
+        mp = Panel("User Interface Mode")
+        mp.add(label("APPLICATION MODE", "LayerTitle"))
+        self.mode_easy = QRadioButton("Easy Mode  -  three steps: PILIH, RUN, OUTPUT (the engine decides the methods)")
+        self.mode_expert = QRadioButton("Expert Mode  -  this research console (all labs, methods and parameters)")
+        self.mode_group = QButtonGroup(self)
+        for b_ in (self.mode_easy, self.mode_expert):
+            self.mode_group.addButton(b_)
+            mp.add(b_)
+        self.mode_note = label("Your interface mode will change after restart.", "Banner", wrap=True)
+        self.mode_note.setVisible(False)
+        mp.add(self.mode_note)
+        self.b_restart = button("SAVE && RESTART", primary=True)
+        self.b_restart.setAccessibleName("SAVE & RESTART")
+        self.b_restart.clicked.connect(self._save_restart)
+        self.b_mode_cancel = button("CANCEL")
+        self.b_mode_cancel.clicked.connect(self._mode_cancel)
+        mp.add(row(self.b_restart, self.b_mode_cancel, None))
+        self.mode_group.buttonToggled.connect(lambda *_: self._mode_changed())
+        self.root.insertWidget(2, mp)   # directly under the title and the network banner
         t = Panel("Optional local engines")
         g = QFormLayout()
         self.use_exif = QCheckBox("Use ExifTool when available (read-only extraction)")
@@ -125,9 +159,16 @@ class SettingsView(View):
         i = self.lang.findData(st.get("language") or "en")
         self.lang.setCurrentIndex(i if i >= 0 else 0)
         self.lang.blockSignals(False)
-        self.mode.blockSignals(True)
-        self.mode.setCurrentText(str(st.get("ui_mode") or "EASY").upper())
-        self.mode.blockSignals(False)
+        self.mode_group.blockSignals(True)
+        (self.mode_easy if st.ui_mode() == "EASY" else self.mode_expert).setChecked(True)
+        self.mode_group.blockSignals(False)
+        self._mode_changed()
+        self.theme.blockSignals(True)
+        self.theme.setCurrentText(str(st.get("theme") or "Dark Laboratory"))
+        self.theme.blockSignals(False)
+        self.easy_fmt.setCurrentText(str(st.get("easy_output_format") or "PNG").upper())
+        self.easy_report.setChecked(bool(st.get("easy_save_report")))
+        self.easy_dir.setText(str(st.get("easy_report_dir") or ""))
         self.lang_note.setText(f"Active language core-UI completeness: {active().completeness():.0%}. Untranslated labels "
                                "show English. Scientific terms stay English by design.")
         self.tools.set_data(["Engine", "State", "Detail"], [list(r) for r in self.ctl.engine_status()])
@@ -155,13 +196,49 @@ class SettingsView(View):
         self.ctl.info.emit(f"Language set to {code}. Scientific terms remain in English.")
         self._mark()
 
-    def _change_mode(self) -> None:
-        self.ctl.settings.set("ui_mode", self.mode.currentText())
+    def _change_theme(self, name: str) -> None:
+        from PySide6.QtWidgets import QApplication
+        from app.ui import theme as T
+        self.ctl.settings.set("theme", name)
         try:
             self.ctl.settings.save()
         except OSError:
             pass
-        self.ctl.uiModeChanged.emit(self.mode.currentText())
+        app = QApplication.instance()
+        if app is not None:
+            T.apply(app, name)
+        self.ctl.info.emit(f"Theme: {name}")
+
+    def _chosen_mode(self) -> str:
+        return "EASY" if self.mode_easy.isChecked() else "EXPERT"
+
+    def _mode_changed(self) -> None:
+        changed = self._chosen_mode() != self.ctl.settings.ui_mode()
+        self.mode_note.setVisible(changed)
+        self.b_restart.setEnabled(changed)
+        self.b_mode_cancel.setEnabled(changed)
+
+    def _mode_cancel(self) -> None:
+        (self.mode_easy if self.ctl.settings.ui_mode() == "EASY" else self.mode_expert).setChecked(True)
+
+    def _save_restart(self) -> None:
+        from app.ui.app_mode import save_and_restart
+
+        ok, msg = save_and_restart(self.ctl, self._chosen_mode())
+        if not ok:
+            self.ctl.error.emit("Application mode", msg)
+
+    def _save_easy_defaults(self) -> None:
+        st = self.ctl.settings
+        st.set("easy_output_format", self.easy_fmt.currentText())
+        st.set("easy_save_report", self.easy_report.isChecked())
+        st.set("easy_report_dir", self.easy_dir.text().strip())
+        try:
+            st.save()
+        except OSError as exc:
+            self.ctl.error.emit("Settings", f"Could not save settings: {exc}")
+            return
+        self.ctl.info.emit("Easy Mode defaults saved")
 
     def _save(self) -> None:
         st = self.ctl.settings

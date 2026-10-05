@@ -63,7 +63,7 @@ def main() -> int:
     for c in data.get("checks", []):
         lines.append(f"    self-test {c['name']}: {'ok' if c['passed'] else 'FAILED'} - {c['detail']}")
     res(rc == 0 and data.get("passed") is True, "self-test (imports, network guard, sample image load, C2PA, sanitize, "
-        "pixel verification, 5 export formats, high resolution, reports, bundle, SynthID Research Lab)", f"exit {rc}, {time.time() - t0:.1f}s")
+        "pixel verification, 5 export formats, high resolution, reports, bundle, SynthID Research Lab, Fingerprint Lab, Easy Mode pipeline)", f"exit {rc}, {time.time() - t0:.1f}s")
     sm_out = tmp / "smoke.json"
     t0 = time.time()
     try:
@@ -77,6 +77,47 @@ def main() -> int:
     lines.append(f"    smoke: {json.dumps(sm)[:1500]}")
     res(rc == 0 and sm.get("ok") is True, "GUI launches, runs an experiment and a SynthID Research run + paper export, renders all views, exits cleanly",
         f"exit {rc}, {time.time() - t0:.1f}s")
+    # Easy Mode shell: PILIH > RUN > OUTPUT through the real widgets, then SAVE & RESTART into Expert Mode
+    es_out, ack = tmp / "smoke_easy.json", tmp / "restart_ack.json"
+    env_easy = dict(env)
+    env_easy["SYNTHPROVENANCE_HOME"] = str(tmp / "home_easy")
+    t0 = time.time()
+    try:
+        p = subprocess.run([str(exe), "--smoke-easy", "--smoke-output", str(es_out), "--smoke-restart-to", "EXPERT",
+                            "--smoke-restart-ack", str(ack)], env=env_easy, cwd=str(dist), capture_output=True, timeout=600)
+        rc = p.returncode
+    except (subprocess.TimeoutExpired, OSError) as exc:
+        rc = -1
+        lines.append(f"Easy smoke launch error: {exc}")
+    es = json.loads(es_out.read_text(encoding="utf-8")) if es_out.is_file() else {}
+    lines.append(f"    easy smoke: {json.dumps(es)[:1500]}")
+    res(rc == 0 and es.get("ok") is True, "Easy Mode GUI: PILIH > RUN TRANSFORMATION > OUTPUT, result saved, report written, "
+        "original unchanged, RUN ANOTHER resets", f"exit {rc}, {time.time() - t0:.1f}s")
+    deadline = time.time() + 120
+    while not ack.is_file() and time.time() < deadline:
+        time.sleep(0.5)
+    time.sleep(0.5)
+    ak = json.loads(ack.read_text(encoding="utf-8")) if ack.is_file() else {}
+    lines.append(f"    restart ack: {json.dumps(ak)}")
+    res(ak.get("shell") == "MainWindow" and ak.get("ui_mode") == "EXPERT" and ak.get("settings_ui_mode") == "EXPERT",
+        "SAVE & RESTART persists the mode, closes and relaunches the executable into the Expert shell",
+        f"relaunched pid {ak.get('pid')}, frozen {ak.get('frozen')}")
+    # Cross-detector study inside the EXE: import external result + Markdown archive, compare, export, local-only
+    xc_out = tmp / "smoke_cross.json"
+    env_xc = dict(env)
+    env_xc["SYNTHPROVENANCE_HOME"] = str(tmp / "home_cross")
+    t0 = time.time()
+    try:
+        p = subprocess.run([str(exe), "--smoke-cross", "--smoke-output", str(xc_out)], env=env_xc, cwd=str(dist),
+                           capture_output=True, timeout=300)
+        rc = p.returncode
+    except (subprocess.TimeoutExpired, OSError) as exc:
+        rc = -1
+        lines.append(f"cross-detector smoke launch error: {exc}")
+    xc = json.loads(xc_out.read_text(encoding="utf-8")) if xc_out.is_file() else {}
+    lines.append(f"    cross-detector smoke: {json.dumps(xc)[:1200]}")
+    res(rc == 0 and xc.get("ok") is True, "Cross-Detector Lab: import external result + Markdown archive, compare with "
+        "local evidence, export report, original unchanged, LOCAL-ONLY", f"exit {rc}, {time.time() - t0:.1f}s")
     lines.append("RESULT: " + ("VERIFIED" if ok else "FAILED"))
     Path(a.log).write_text("\n".join(lines) + "\n", encoding="utf-8")
     return 0 if ok else 1

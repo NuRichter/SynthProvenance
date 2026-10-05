@@ -243,6 +243,10 @@ def render_html(report: dict) -> str:
             parts.append(f"<p>{html.escape(str(p))}</p>")
         if s.get("list"):
             parts.append("<ul>" + "".join(f"<li>{html.escape(str(x))}</li>" for x in s["list"]) + "</ul>")
+        for im in s.get("images") or []:
+            parts.append(f'<figure><img src="{html.escape(str(im["file"]))}" alt="{html.escape(str(im.get("caption", "")))}" '
+                         f'style="max-width:100%;border:1px solid var(--line)"><figcaption class="muted">'
+                         f'{html.escape(str(im.get("caption", "")))}</figcaption></figure>')
     try:
         tpl = Template(resource_path("assets", "templates", "report.html").read_text(encoding="utf-8"))
     except OSError:
@@ -311,6 +315,15 @@ def write_pdf(report: dict, path: Path) -> Path:
             story.append(Paragraph(_pdf_text(p), body))
         for item in s.get("list") or []:
             story.append(Paragraph("- " + _pdf_text(item), body))
+        for im in s.get("images") or []:
+            src = Path(str(im.get("path") or ""))
+            if src.is_file():
+                from reportlab.platypus import Image as RLImage
+
+                img = RLImage(str(src))
+                scale = min(1.0, (width * 0.6) / float(img.drawWidth), (90 * mm) / float(img.drawHeight))
+                img.drawWidth, img.drawHeight = img.drawWidth * scale, img.drawHeight * scale
+                story.extend([Spacer(1, 3), img, Paragraph(_pdf_text(im.get("caption", "")), small)])
 
     def footer(canvas, doc):
         canvas.saveState()

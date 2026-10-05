@@ -19,7 +19,7 @@ class View(QWidget):
         self.ctl, self.win = ctl, win
         self._dirty = True
         for sig in (ctl.sourceChanged, ctl.experimentChanged, ctl.recordsChanged, ctl.statisticsChanged, ctl.toolsChanged,
-                    ctl.researchChanged, ctl.fingerprintChanged):
+                    ctl.researchChanged, ctl.fingerprintChanged, ctl.crossDetectorChanged):
             sig.connect(self._mark)
         ctl.selectionChanged.connect(lambda _t: self._mark())
         self.root = QVBoxLayout(self)

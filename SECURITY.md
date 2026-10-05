@@ -17,6 +17,11 @@ every input image as untrusted and to operate offline.
   argument lists, never a shell string built from untrusted paths.
 - **Originals are never modified.** Experiments and research runs operate on copies; originals are hashed before and
   after and reported as `original_unchanged`.
+- **External detectors** (TruthScan) are studied by importing a user-supplied result; SynthProvenance never
+  uploads an image or calls an external API. The optional browser hand-off is OFF by default, consent-gated per
+  session and per open, restricted to allow-listed `https` hosts, and records `uploaded_by_synthprovenance: false`.
+  SynthProvenance never automates repeated external submissions and never searches for transformations that defeat
+  an external detector.
 - **Online verification** (SynthID) is OFF by default and is an explicit, per-session, consent-gated hand-off to an
   official Google page in the browser. SynthProvenance itself uploads nothing.
 

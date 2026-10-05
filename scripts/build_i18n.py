@@ -17,6 +17,9 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from app.i18n import LANGUAGES  # noqa: E402
 
+sys.path.insert(0, str(ROOT / "scripts"))
+from i18n_easy import EASY_KEYS, EASY_TR, validate as validate_easy  # noqa: E402
+
 EN = json.loads((ROOT / "app" / "i18n" / "locales" / "en.json").read_text(encoding="utf-8"))
 BASE_KEYS = [k for k in EN if not k.startswith("_")]
 
@@ -74,13 +77,15 @@ EXTRA: dict[str, dict] = {
     "card.method": "Metode", "card.confidence": "Keyakinan", "card.pixel_impact": "Dampak piksel",
     "card.interpretation": "Interpretasi riset", "card.limitations": "Keterbatasan", "panel.original": "Asli",
     "panel.candidate_signal": "Sinyal Kandidat", "panel.estimated_content": "Konten Estimasi",
-    "panel.residual": "Residu", "panel.reconstructed": "Direkonstruksi", "panel.difference": "Selisih",
-    "easy.step_analyze": "Analisis", "easy.step_goal": "Pilih tujuan riset", "easy.step_run": "Jalankan",
-    "easy.step_compare": "Bandingkan", "easy.step_export": "Ekspor"},
+    "panel.residual": "Residu", "panel.reconstructed": "Direkonstruksi", "panel.difference": "Selisih"},
 }
 
 
 def main() -> int:
+    problems = validate_easy()
+    if problems:
+        print("Easy Mode translation table problems:\n  " + "\n  ".join(problems))
+        return 1
     out_dir = ROOT / "app" / "i18n" / "locales"
     out_dir.mkdir(parents=True, exist_ok=True)
     written = []
@@ -90,6 +95,7 @@ def main() -> int:
         vals = TR.get(code, [])
         mapping = {K[i]: vals[i] for i in range(min(len(K), len(vals))) if vals[i]}
         mapping.update(EXTRA.get(code, {}))
+        mapping.update({k: v for k, v in zip(EASY_KEYS, EASY_TR.get(code, [])) if v})  # Easy Mode shell (complete)
         complete = round(len(mapping) / len(BASE_KEYS), 3)
         data = {"_meta": {"name": native, "english_name": english, "rtl": rtl, "complete": complete}}
         data.update(mapping)

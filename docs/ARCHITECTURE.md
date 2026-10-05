@@ -65,3 +65,28 @@ transformation: add an `OpSpec` in `transform_engine.OPERATIONS` (parameters ren
 SynthID engine: follow the contract in `tools/README.md`, no code change needed. New fingerprint method: add a `Method`
 record in `app/research/methods.py` and a dispatch branch in `app/research/runner.py` (the registry and card render
 automatically); `validate()` enforces the honesty rules.
+
+## Easy Mode / Expert Mode
+
+Two application shells share one `AppController` and every engine. `app/main.py` reads `Settings.ui_mode()` and
+builds either `app/ui/easy/window.EasyWindow` (light theme, three steps) or `app/ui/main_window.MainWindow` (dark
+research console). Switching is a restart (`app/ui/app_mode.save_and_restart`: persist, start a detached instance,
+quit). The Easy shell calls `AppController.run_easy`, which runs `app/core/easy_mode_orchestrator.EasyModeOrchestrator`
+in the worker pool: a deterministic 12-stage pipeline with a per-method suitability plan, shared execution of identical
+method implementations, graceful per-method / per-stage fallback, a ground-truth candidate evaluator for the controlled
+surrogate arm, the `format_conversion` transformation for the result image, and `app/services/easy_report.py` for the
+report (rendered by `report_service`). Nothing in the orchestrator re-implements a scientific method.
+
+## Cross-Detector Research Lab
+
+`app/research/cross_detector.py` is the pure comparison engine: it parses a user-supplied external result
+(`ExternalResult`), distils local evidence from an `EasyModeResult` (`local_evidence_from_easy`, descriptive dimensions
+mapped to the seven fingerprint families), and compares them (`compare`) without ever declaring a system correct unless
+the ground-truth level is decisive. `app/research/heatmap_compare.py` quantifies spatial overlap of an imported heatmap
+with local maps (IoU / Dice / correlation). `app/research/hardcases.py` generates a labelled local benchmark with known
+ground truth. `app/core/cross_detector_lab.py` is the `SPX-XD` run store, the benchmark-matrix CSV, and the
+consent-gated `ExternalDetectorGate` browser hand-off (never uploads). `app/services/cross_detector_report.py` renders
+the 14-section report through `report_service`. The Expert view `app/ui/views/cross_detector_view.py` wires it together;
+`AppController.run_cross_detector` reuses the Easy orchestrator for the local pass. Nothing in this subsystem contacts a
+network.
+

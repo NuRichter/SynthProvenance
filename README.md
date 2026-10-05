@@ -60,6 +60,32 @@ methods, runner), `app/services` (sanitizer, C2PA separation, SynthID and finger
 comparison, transformation orchestration, reports, export), SynthID Research Lab engines in `app/core/synthid_*`,
 `app/models`, `app/ui` (PySide6 views and widgets, splash, wizard), `app/utils`. Details: `docs/ARCHITECTURE.md`.
 
+### Easy Mode and Expert Mode
+
+SynthProvenance has two application shells over the same research engines. **Easy Mode** (default) is three steps:
+**01 PILIH** (drop or choose an image, pick PNG / JPG / WEBP / TIFF / BMP, optional report location) ->
+**02 RUN** (one RUN TRANSFORMATION button; `app/core/easy_mode_orchestrator.py` runs a fixed 12-stage pipeline:
+safety, baseline hash, metadata, C2PA, local SynthID status, fingerprint analysis, signal estimation, controlled
+surrogate separation, consensus, validation, output, report) -> **03 OUTPUT** (result image, pixel status, SAVE RESULT,
+OPEN REPORT, RUN ANOTHER). The result image is a pixel-preserving re-encoding of the original; separation and
+reconstruction run only on a locally embedded keyed surrogate with known ground truth and are reported, never applied
+to the real image. **Expert Mode** is the full research console. Switch in Settings > APPLICATION MODE >
+SAVE & RESTART (the application persists the mode, closes and relaunches). `--ui-mode easy|expert` overrides the mode
+for one session.
+
+### TruthScan Cross-Detector Research Lab
+
+Expert Mode includes a comparative research instrument. SynthProvenance is an **independent forensic system**; an
+external detector such as TruthScan is an **external detector** whose result is imported (user-supplied) and studied,
+never trusted as ground truth and never fetched by the app. The lab compares the imported result with SynthProvenance's
+own local, descriptive evidence across fingerprint families, reports `AGREEMENT` / `PARTIAL AGREEMENT` / `DISAGREEMENT`
+/ `INSUFFICIENT EVIDENCE`, records the ground-truth level (0-5), shows an independent-evidence scorecard that is never
+collapsed into a single "truth score", compares an imported heatmap with local maps, generates a labelled local
+hard-case benchmark, and exports a Cross-Detector Research Report and benchmark CSV. It never declares either system
+correct unless ground truth supports it, and TruthScan integration is OFF by default and never uploads an image (an
+optional, consent-gated browser hand-off opens the site; the researcher uploads manually). See
+`docs/CROSS_DETECTOR_RESEARCH.md`, `docs/TRUTHSCAN_RESEARCH.md`, `docs/FINGERPRINT_EVIDENCE_MODEL.md`.
+
 ## Fingerprint Research Lab
 
 The **Fingerprint Research Lab** is a local, numpy-only forensic laboratory for generative-image fingerprint research

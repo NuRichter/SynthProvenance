@@ -1,25 +1,43 @@
-"""Dark scientific-instrument theme."""
+"""Scientific-instrument theme engine (multi-theme, presentation only).
+
+``C`` holds the active theme's colour tokens (mutated in place so importers keep a live
+reference). ``state_color`` maps a state string to a token via ``STATE_ROLES``. ``apply``
+selects a theme from :mod:`app.ui.themes`, rebuilds ``C`` and ``STATE_COLORS`` in place,
+and sets the palette + stylesheet, so a theme can be switched live without restart.
+"""
 from __future__ import annotations
 
 from PySide6.QtGui import QColor, QFont, QPalette
 
-C = {"base": "#0E1318", "panel": "#141B22", "raised": "#1A232C", "field": "#10171D", "line": "#243140",
-     "text": "#D5DEE7", "muted": "#7D8C9B", "cyan": "#4CC3D9", "blue": "#3D7FD9", "ok": "#46B37B",
-     "warn": "#D9A441", "bad": "#E0605A", "unknown": "#8A96A3"}
+from app.ui.themes import DEFAULT_THEME, resolve
 
-STATE_COLORS = {
-    "PRESENT": C["cyan"], "ABSENT": C["muted"], "UNKNOWN": C["unknown"], "INVALID": C["bad"], "REMOVED": C["warn"],
-    "PRESERVED": C["ok"], "PIXEL-EXACT": C["ok"], "TRANSFORMATION DETECTED": C["warn"], "NOT COMPARABLE": C["unknown"],
-    "OBSERVED": C["cyan"], "NOT OBSERVED": C["muted"], "DETECTED": C["cyan"], "NOT DETECTED": C["muted"],
-    "PERSISTED": C["ok"], "ALTERED": C["warn"], "UNAVAILABLE": C["unknown"], "NOT TESTABLE": C["unknown"],
-    "MATCH": C["ok"], "MISMATCH": C["bad"], "COMPLETE": C["ok"], "FAILED": C["bad"], "REFUSED": C["warn"],
-    "NOT VALIDATED": C["unknown"], "NOT RUN": C["muted"], "RECORDED": C["cyan"], "READY": C["ok"],
-    "AVAILABLE": C["ok"], "ACTIVE": C["ok"], "\u2713": C["ok"], "\u2715": C["bad"], "?": C["unknown"], "N/A": C["muted"],
-    "\u2014": C["muted"], "YES": C["ok"], "NO": C["muted"], "WARNING": C["warn"], "ERROR": C["bad"], "INFO": C["muted"],
-    "NOTICE": C["cyan"], "POSSIBLY DETECTED": C["warn"], "AUTHORITATIVE": C["ok"], "RESEARCH": C["cyan"],
-    "EXPERIMENTAL": C["warn"], "UNVERIFIED": C["warn"], "VERIFIED": C["ok"], "NOT IMPLEMENTED": C["muted"],
-    "NOT EVALUATED": C["muted"], "LOCAL MODE": C["ok"], "ONLINE MODE": C["warn"], "INSUFFICIENT DATA": C["warn"],
+# active theme tokens (start on the default; replaced in place by apply)
+C: dict = dict(resolve(DEFAULT_THEME)["tokens"])
+_current = DEFAULT_THEME
+
+# state string -> role key in C (so every theme recolours states consistently)
+STATE_ROLES: dict[str, str] = {
+    "PRESENT": "cyan", "ABSENT": "muted", "UNKNOWN": "unknown", "INVALID": "bad", "REMOVED": "warn",
+    "PRESERVED": "ok", "PIXEL-EXACT": "ok", "TRANSFORMATION DETECTED": "warn", "NOT COMPARABLE": "unknown",
+    "OBSERVED": "cyan", "NOT OBSERVED": "muted", "DETECTED": "cyan", "NOT DETECTED": "muted", "PERSISTED": "ok",
+    "ALTERED": "warn", "UNAVAILABLE": "unknown", "NOT TESTABLE": "unknown", "MATCH": "ok", "MISMATCH": "bad",
+    "COMPLETE": "ok", "FAILED": "bad", "REFUSED": "warn", "NOT VALIDATED": "unknown", "NOT RUN": "muted",
+    "RECORDED": "cyan", "READY": "ok", "AVAILABLE": "ok", "ACTIVE": "ok", "✓": "ok", "✕": "bad",
+    "?": "unknown", "N/A": "muted", "—": "muted", "YES": "ok", "NO": "muted", "WARNING": "warn", "ERROR": "bad",
+    "INFO": "muted", "NOTICE": "cyan", "POSSIBLY DETECTED": "warn", "AUTHORITATIVE": "ok", "RESEARCH": "cyan",
+    "EXPERIMENTAL": "warn", "UNVERIFIED": "warn", "VERIFIED": "ok", "NOT IMPLEMENTED": "muted",
+    "NOT EVALUATED": "muted", "LOCAL MODE": "ok", "ONLINE MODE": "warn", "INSUFFICIENT DATA": "warn",
+    "AGREEMENT": "ok", "DISAGREEMENT": "warn", "PARTIAL AGREEMENT": "cyan", "INSUFFICIENT EVIDENCE": "unknown",
 }
+STATE_COLORS: dict[str, str] = {}
+
+
+def _rebuild_state_colors() -> None:
+    STATE_COLORS.clear()
+    STATE_COLORS.update({state: C[role] for state, role in STATE_ROLES.items()})
+
+
+_rebuild_state_colors()
 
 
 def state_color(text: str) -> str:
@@ -40,74 +58,87 @@ def mono_font(size: float = 9.0) -> QFont:
     return f
 
 
-QSS = f"""
-QWidget {{ background: {C['base']}; color: {C['text']}; font-size: 9.5pt; }}
-QToolTip {{ background: {C['raised']}; color: {C['text']}; border: 1px solid {C['line']}; padding: 4px; }}
-#TopBar, #FooterBar {{ background: {C['panel']}; }}
-#TopBar {{ border-bottom: 1px solid {C['line']}; }}
-#FooterBar {{ border-top: 1px solid {C['line']}; }}
-#Nav {{ background: {C['panel']}; border: none; border-right: 1px solid {C['line']}; outline: 0; padding-top: 6px; }}
-#Nav::item {{ padding: 9px 14px; color: {C['muted']}; border-left: 2px solid transparent; }}
-#Nav::item:selected {{ color: {C['text']}; background: {C['raised']}; border-left: 2px solid {C['cyan']}; }}
-#Nav::item:hover {{ color: {C['text']}; }}
-QFrame#Panel {{ background: {C['panel']}; border: 1px solid {C['line']}; border-radius: 3px; }}
+def current_theme() -> str:
+    return _current
+
+
+def build_qss(c: dict) -> str:
+    return f"""
+QWidget {{ background: {c['base']}; color: {c['text']}; font-size: 9.5pt; }}
+QToolTip {{ background: {c['raised']}; color: {c['text']}; border: 1px solid {c['line']}; padding: 4px; }}
+#TopBar, #FooterBar {{ background: {c['panel']}; }}
+#TopBar {{ border-bottom: 1px solid {c['line']}; }}
+#FooterBar {{ border-top: 1px solid {c['line']}; }}
+#Nav {{ background: {c['panel']}; border: none; border-right: 1px solid {c['line']}; outline: 0; padding-top: 6px; }}
+#Nav::item {{ padding: 9px 14px; color: {c['muted']}; border-left: 2px solid transparent; }}
+#Nav::item:selected {{ color: {c['text']}; background: {c['raised']}; border-left: 2px solid {c['cyan']}; }}
+#Nav::item:hover {{ color: {c['text']}; }}
+QFrame#Panel {{ background: {c['panel']}; border: 1px solid {c['line']}; border-radius: 3px; }}
 QFrame#Panel QLabel, QFrame#Readout QLabel {{ background: transparent; }}
-QLabel#PanelTitle {{ color: {C['muted']}; font-size: 8pt; font-weight: 600; letter-spacing: 1px; }}
-QLabel#Brand {{ color: {C['muted']}; font-size: 8pt; font-weight: 600; letter-spacing: 2px; }}
+QLabel#PanelTitle {{ color: {c['muted']}; font-size: 8pt; font-weight: 600; letter-spacing: 1px; }}
+QLabel#Brand {{ color: {c['muted']}; font-size: 8pt; font-weight: 600; letter-spacing: 2px; }}
 QLabel#AppTitle {{ font-size: 15pt; font-weight: 600; }}
 QLabel#Hero {{ font-size: 24pt; font-weight: 300; }}
-QLabel#Muted, QLabel#Footer {{ color: {C['muted']}; }}
+QLabel#Muted, QLabel#Footer {{ color: {c['muted']}; }}
 QLabel#Footer {{ font-size: 8pt; }}
-QLabel#LayerTitle {{ color: {C['cyan']}; font-size: 11pt; font-weight: 600; letter-spacing: 1px; }}
-QFrame#Readout {{ background: {C['field']}; border: 1px solid {C['line']}; border-radius: 2px; }}
-QLabel#ReadoutCaption {{ color: {C['muted']}; font-size: 7.5pt; font-weight: 600; letter-spacing: 1px; }}
+QLabel#LayerTitle {{ color: {c['cyan']}; font-size: 11pt; font-weight: 600; letter-spacing: 1px; }}
+QFrame#Readout {{ background: {c['field']}; border: 1px solid {c['line']}; border-radius: 2px; }}
+QLabel#ReadoutCaption {{ color: {c['muted']}; font-size: 7.5pt; font-weight: 600; letter-spacing: 1px; }}
 QLabel#ReadoutValue {{ font-size: 13pt; font-weight: 600; }}
-QLabel#ReadoutDetail {{ color: {C['muted']}; font-size: 8pt; }}
-QLabel#Banner {{ background: #2A2213; border: 1px solid {C['warn']}; color: #F1D7A0; padding: 8px; }}
-QLabel#InfoBanner {{ background: #10252C; border: 1px solid #1F5563; color: #BFE7F0; padding: 8px; }}
-QLabel#Badge {{ border: 1px solid {C['line']}; border-radius: 2px; padding: 1px 6px; font-weight: 600; }}
-QPushButton {{ background: {C['raised']}; border: 1px solid {C['line']}; padding: 6px 12px; border-radius: 2px; }}
-QPushButton:hover {{ border-color: {C['cyan']}; }}
-QPushButton:checked {{ border-color: {C['cyan']}; background: #16323B; }}
-QPushButton:disabled {{ color: #4A5866; border-color: #1C2630; }}
-QPushButton#Primary {{ background: #123845; border: 1px solid {C['cyan']}; color: #E8F8FB; font-weight: 600; padding: 8px 18px; }}
-QPushButton#Primary:hover {{ background: #184A5A; }}
+QLabel#ReadoutDetail {{ color: {c['muted']}; font-size: 8pt; }}
+QLabel#Banner {{ background: {c['panel']}; border: 1px solid {c['warn']}; color: {c['warn']}; padding: 8px; }}
+QLabel#InfoBanner {{ background: {c['panel']}; border: 1px solid {c['cyan']}; color: {c['cyan']}; padding: 8px; }}
+QLabel#Badge {{ border: 1px solid {c['line']}; border-radius: 2px; padding: 1px 6px; font-weight: 600; }}
+QPushButton {{ background: {c['raised']}; border: 1px solid {c['line']}; padding: 6px 12px; border-radius: 2px; }}
+QPushButton:hover {{ border-color: {c['cyan']}; }}
+QPushButton:checked {{ border-color: {c['cyan']}; background: {c['field']}; }}
+QPushButton:disabled {{ color: {c['muted']}; border-color: {c['line']}; }}
+QPushButton#Primary {{ background: {c['cyan']}; border: 1px solid {c['cyan']}; color: {c['base']}; font-weight: 600; padding: 8px 18px; }}
+QPushButton#Primary:hover {{ background: {c['blue']}; border-color: {c['blue']}; }}
 QLineEdit, QComboBox, QSpinBox, QDoubleSpinBox, QPlainTextEdit, QTextBrowser, QTableWidget, QTreeWidget, QListWidget {{
-  background: {C['field']}; border: 1px solid {C['line']}; selection-background-color: #1E4A57; selection-color: {C['text']}; }}
-QComboBox QAbstractItemView {{ background: {C['raised']}; }}
-QTableWidget, QTreeWidget {{ gridline-color: {C['line']}; alternate-background-color: #121A21; }}
-QHeaderView::section {{ background: {C['panel']}; color: {C['muted']}; border: none; border-right: 1px solid {C['line']};
-  border-bottom: 1px solid {C['line']}; padding: 4px 6px; font-weight: 600; }}
-QTabWidget::pane {{ border: 1px solid {C['line']}; top: -1px; }}
-QTabBar::tab {{ background: {C['panel']}; color: {C['muted']}; padding: 6px 14px; border: 1px solid {C['line']}; border-bottom: none; margin-right: 1px; }}
-QTabBar::tab:selected {{ color: {C['text']}; border-top: 2px solid {C['cyan']}; background: {C['base']}; }}
-QProgressBar {{ border: 1px solid {C['line']}; background: {C['field']}; max-height: 12px; text-align: center; font-size: 7pt; }}
-QProgressBar::chunk {{ background: {C['cyan']}; }}
-QStatusBar {{ background: {C['panel']}; border-top: 1px solid {C['line']}; color: {C['muted']}; }}
-QStatusBar QLabel {{ background: transparent; color: {C['muted']}; padding: 0 8px; }}
-QScrollBar:vertical, QScrollBar:horizontal {{ background: {C['base']}; border: none; width: 10px; height: 10px; }}
-QScrollBar::handle {{ background: {C['line']}; border-radius: 4px; min-height: 24px; min-width: 24px; }}
+  background: {c['field']}; border: 1px solid {c['line']}; selection-background-color: {c['blue']}; selection-color: {c['text']}; }}
+QComboBox QAbstractItemView {{ background: {c['raised']}; }}
+QTableWidget, QTreeWidget {{ gridline-color: {c['line']}; alternate-background-color: {c['panel']}; }}
+QHeaderView::section {{ background: {c['panel']}; color: {c['muted']}; border: none; border-right: 1px solid {c['line']};
+  border-bottom: 1px solid {c['line']}; padding: 4px 6px; font-weight: 600; }}
+QTabWidget::pane {{ border: 1px solid {c['line']}; top: -1px; }}
+QTabBar::tab {{ background: {c['panel']}; color: {c['muted']}; padding: 6px 14px; border: 1px solid {c['line']}; border-bottom: none; margin-right: 1px; }}
+QTabBar::tab:selected {{ color: {c['text']}; border-top: 2px solid {c['cyan']}; background: {c['base']}; }}
+QProgressBar {{ border: 1px solid {c['line']}; background: {c['field']}; max-height: 12px; text-align: center; font-size: 7pt; }}
+QProgressBar::chunk {{ background: {c['cyan']}; }}
+QStatusBar {{ background: {c['panel']}; border-top: 1px solid {c['line']}; color: {c['muted']}; }}
+QStatusBar QLabel {{ background: transparent; color: {c['muted']}; padding: 0 8px; }}
+QScrollBar:vertical, QScrollBar:horizontal {{ background: {c['base']}; border: none; width: 10px; height: 10px; }}
+QScrollBar::handle {{ background: {c['line']}; border-radius: 4px; min-height: 24px; min-width: 24px; }}
 QScrollBar::add-line, QScrollBar::sub-line {{ width: 0; height: 0; }}
-QDockWidget::title {{ background: {C['panel']}; padding: 4px; color: {C['muted']}; }}
-QMenuBar {{ background: {C['panel']}; }} QMenuBar::item:selected, QMenu::item:selected {{ background: {C['raised']}; }}
-QMenu {{ background: {C['panel']}; border: 1px solid {C['line']}; }}
+QDockWidget::title {{ background: {c['panel']}; padding: 4px; color: {c['muted']}; }}
+QMenuBar {{ background: {c['panel']}; }} QMenuBar::item:selected, QMenu::item:selected {{ background: {c['raised']}; }}
+QMenu {{ background: {c['panel']}; border: 1px solid {c['line']}; }}
 QCheckBox::indicator, QRadioButton::indicator {{ width: 13px; height: 13px; }}
-QSplitter::handle {{ background: {C['line']}; }}
+QSplitter::handle {{ background: {c['line']}; }}
 """
 
 
-def apply(app) -> None:
+def apply(app, theme: str | None = None) -> None:
+    """Apply a theme by name (persisted elsewhere). Rebuilds C and STATE_COLORS in place and re-skins the app."""
+    global _current
+    spec = resolve(theme)
+    _current = theme if theme in __import__("app.ui.themes", fromlist=["THEMES"]).THEMES else DEFAULT_THEME
+    C.clear()
+    C.update(spec["tokens"])
+    _rebuild_state_colors()
     app.setStyle("Fusion")
     pal = QPalette()
     for role, key in ((QPalette.ColorRole.Window, "base"), (QPalette.ColorRole.Base, "field"),
                       (QPalette.ColorRole.AlternateBase, "panel"), (QPalette.ColorRole.Button, "raised"),
                       (QPalette.ColorRole.Text, "text"), (QPalette.ColorRole.WindowText, "text"),
                       (QPalette.ColorRole.ButtonText, "text"), (QPalette.ColorRole.Highlight, "blue"),
-                      (QPalette.ColorRole.ToolTipBase, "raised"), (QPalette.ColorRole.ToolTipText, "text")):
+                      (QPalette.ColorRole.ToolTipBase, "raised"), (QPalette.ColorRole.ToolTipText, "text"),
+                      (QPalette.ColorRole.PlaceholderText, "muted")):
         pal.setColor(role, QColor(C[key]))
     app.setPalette(pal)
     font = QFont()
     font.setFamilies(["Segoe UI", "Inter", "DejaVu Sans", "Arial"])
     font.setPointSizeF(9.5)
     app.setFont(font)
-    app.setStyleSheet(QSS)
+    app.setStyleSheet(build_qss(C))
