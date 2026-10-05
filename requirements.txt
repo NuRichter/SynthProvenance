@@ -1,0 +1,9 @@
+# SynthProvenance runtime dependencies.
+# Exact pins. win_amd64 wheels verified on PyPI for CPython 3.11, 3.12, 3.13 and 3.14.
+PySide6-Essentials==6.10.2
+shiboken6==6.10.2
+pillow==12.0.0
+numpy==2.3.5
+blake3==1.0.8
+reportlab==4.4.4
+charset-normalizer==3.5.1

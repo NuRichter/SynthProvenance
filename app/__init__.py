@@ -1,0 +1,12 @@
+"""SynthProvenance: Scientific AI Content Signal & Image Provenance Laboratory."""
+
+__app_name__ = "SynthProvenance"
+__version__ = "2.1.0"
+__subtitle__ = "Scientific AI Content Signal & Image Provenance Laboratory"
+__tagline__ = "Separate the Signal. Preserve the Pixel. Study the Provenance."
+__motto__ = "WE DO NOT GUESS. WE MEASURE."
+__brand_primary__ = "INSiYDE INNOVATIONS"
+__brand_secondary__ = "NuRichter Workspace"
+__org__ = "Insyide Innovations \u00d7 NuRichter Workspace"
+__environment__ = "Faculty of Computer Science \u00b7 Insyide Innovations Lab \u00b7 NuRichter Workspace"
+__classification__ = "PRIVATE SCIENTIFIC RESEARCH SOFTWARE"

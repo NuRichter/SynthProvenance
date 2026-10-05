@@ -1,0 +1,517 @@
+{
+ "accessed": "2026-10-05",
+ "methods": [
+  {
+   "method": "Marra et al. GAN fingerprints (PRNU-style residual averaging)",
+   "verdict": "NUMPY-REIMPLEMENTABLE",
+   "repo": "UNKNOWN (no official code link on arXiv page or in paper text; no matching repo visible on github.com/grip-unina)",
+   "license": "N/A (no official repo found)",
+   "framework": "N/A (method is signal-processing: denoising residual R = X - f(X), fingerprint = average of residuals, attribution by correlation)",
+   "weights": "None required by the method (no learned model); fingerprints are estimated from reference images of each GAN",
+   "justification": "Residual extraction with a classical denoiser, residual averaging and normalized correlation are pure numpy/Pillow operations with no learned weights; attribution still needs locally supplied reference images per candidate generator (closed set)."
+  },
+  {
+   "method": "Yu et al. 2019 learned GAN fingerprints (attribution classifier)",
+   "verdict": "REQUIRES-DL-RUNTIME",
+   "repo": "https://github.com/ningyu1991/GANFingerprints",
+   "license": "No SPDX id (GitHub reports NOASSERTION). LICENSE file contains CC-BY-NC-4.0 text plus a custom non-commercial research license (Copyright 2019 Max Planck Institute for Informatics, University of Maryland, Ning Yu, Larry Davis, Mario Fritz).",
+   "framework": "TensorFlow 1.x (tensorflow-gpu 1.12)",
+   "weights": "Required for inference: pretrained GAN source models (ProGAN, SNGAN, CramerGAN, MMDGAN) and attribution classifiers (regular and VisNet) hosted on Google Drive; sizes not stated (UNKNOWN); covered by the repo's non-commercial license (no separate weight license stated).",
+   "justification": "Attribution is a learned TF1 CNN whose Google-Drive weights cover only four 2018-era GANs at 128x128; using or extending it needs a DL runtime and retraining on new generators."
+  },
+  {
+   "method": "Yu et al. 2021 Artificial (proactive) GAN fingerprints",
+   "verdict": "NOT-APPLICABLE",
+   "repo": "https://github.com/ningyu1991/ArtificialGANFingerprints",
+   "license": "No SPDX id (GitHub reports NOASSERTION). Custom non-commercial research license: 'Copyright (c) 2020 Max Planck Institute for Informatics, University of Maryland, Ning Yu, Vladislav Skripniuk, Sahar Abdelnabi, and Mario Fritz ... solely for internal, non-commercial research purposes.'",
+   "framework": "PyTorch",
+   "weights": "Required: fingerprint encoder/decoder (steganography autoencoder) per dataset/resolution plus 12 fingerprinted generative models, hosted on Google Drive; sizes not stated (UNKNOWN); under repo's non-commercial license.",
+   "justification": "Detection requires a learned decoder paired with a generator trained on fingerprinted data; arbitrary third-party images carry no such fingerprint, so it cannot be applied (and the decoder would also need a DL runtime)."
+  },
+  {
+   "method": "Frank et al. 2020 DCT frequency analysis (GANDCTAnalysis)",
+   "verdict": "NUMPY-REIMPLEMENTABLE",
+   "repo": "https://github.com/RUB-SysSec/GANDCTAnalysis",
+   "license": "MIT (Copyright (c) 2021 Chair for Systems Security, Ruhr University Bochum)",
+   "framework": "TensorFlow 2.0+ (Python 3); numpy for DCT dataset preparation",
+   "weights": "Optional pretrained models on Google Drive (link in README); size and separate license not stated (UNKNOWN). The ridge/logistic-regression baseline can be refit without them.",
+   "justification": "Block/global DCT log-spectrum features and a ridge/logistic regression classifier are implementable in numpy with no pretrained weights; the linear decision layer must be fit on locally supplied labeled real/generated images, and the CNN variants are out of scope."
+  },
+  {
+   "method": "Durall et al. 2020 up-convolution spectral artifacts (azimuthal-average spectrum detector)",
+   "verdict": "NUMPY-REIMPLEMENTABLE",
+   "repo": "https://github.com/cc-hpc-itwm/UpConv (official, spectral regularization / training code); detection pipeline is in the authors' companion repo https://github.com/cc-hpc-itwm/DeepFakeDetection (official code of 'Unmasking DeepFakes with simple Features', arXiv:1911.00686)",
+   "license": "UpConv: GPL-3.0. DeepFakeDetection: no license file (raw LICENSE/LICENSE.md/LICENSE.txt return 404; GitHub API reports no license).",
+   "framework": "UpConv: PyTorch 1.1.0 (Python 3.6, numpy 1.16.2, OpenCV 4.0.0, matplotlib 3.1.1). DeepFakeDetection: numpy + OpenCV + scikit-style classifiers (logistic regression, SVM, k-means), no DL.",
+   "weights": "None mentioned (detector features are hand-crafted; classifiers trained from scratch).",
+   "justification": "FFT power spectrum, azimuthal averaging and a logistic-regression/linear decision rule are plain numpy; only labeled local samples are needed to fit the tiny classifier (official detector code itself uses no DL)."
+  },
+  {
+   "method": "Schwarz et al. 2021 frequency bias of generative models",
+   "verdict": "NOT-APPLICABLE",
+   "repo": "https://github.com/autonomousvision/frequency_bias",
+   "license": "MIT (Copyright (c) 2021 autonomousvision)",
+   "framework": "PyTorch (builds on ProGAN/StyleGAN2/StyleGAN3 code bases; conda environment.yml and environment_sg3.yml)",
+   "weights": "None mentioned (testbeds train GANs from scratch).",
+   "justification": "It studies why GANs mis-model spectra during training and provides no detector; its reduced-spectrum measurement is numpy-trivial and already covered by Durall/Frank-style spectral features."
+  },
+  {
+   "method": "Bonettini et al. Benford's law on quantized DCT coefficients",
+   "verdict": "NUMPY-REIMPLEMENTABLE",
+   "repo": "UNKNOWN (no code link on arXiv page or in paper text; none found by search)",
+   "license": "N/A (no official repo found)",
+   "framework": "N/A (hand-crafted features + Random Forest)",
+   "weights": "None (feature vector + Random Forest trained by user)",
+   "justification": "Block DCT, quantization, first-digit histograms and divergences are numpy-only; the Random Forest needs labeled local data and would be adapted (e.g., to a numpy logistic regression or threshold), so a numpy version is an ADAPTED, not identical, method."
+  },
+  {
+   "method": "DNA-Det",
+   "verdict": "REQUIRES-TRAINING-DATA",
+   "repo": "https://github.com/ICTMCG/DNA-Det",
+   "license": "no license file (root listing has no LICENSE; GitHub API license=null)",
+   "framework": "PyTorch 1.9.0",
+   "weights": "Pretrained models and generated data on Baiduyun and Google Drive (multi-part links); size UNKNOWN; weight license UNKNOWN",
+   "justification": "A CNN classifier trained on images from a closed set of GAN architectures; the core idea cannot be reproduced without the labelled training images and a DL runtime to train or run it."
+  },
+  {
+   "method": "GFD-Net",
+   "verdict": "REQUIRES-TRAINING-DATA",
+   "repo": "UNKNOWN (no official code found: arXiv page has no code link, Papers-with-Code lists no implementation, no GFD-Net repo in the ICTMCG GitHub org)",
+   "license": "UNKNOWN (no repo)",
+   "framework": "UNKNOWN (no code). The paper describes a U-Net generator, a discriminator and an auxiliary classifier trained with four losses.",
+   "weights": "None released (UNKNOWN)",
+   "justification": "An adversarially trained disentangling network with no released code or weights; it would need full retraining on labelled GAN images."
+  },
+  {
+   "method": "Liu et al. 2024 multi-level GAN fingerprints",
+   "verdict": "REQUIRES-TRAINING-DATA",
+   "repo": "UNKNOWN (no code link in the UTS repository record or in searches)",
+   "license": "UNKNOWN (no repo); the paper itself is closed access at UTS OPUS",
+   "framework": "UNKNOWN",
+   "weights": "UNKNOWN (none found)",
+   "justification": "A learned decoupling framework with no released code, weights or accessible full text; it cannot be reproduced faithfully."
+  },
+  {
+   "method": "DIRE",
+   "verdict": "REQUIRES-DL-RUNTIME",
+   "repo": "https://github.com/ZhendongWang6/DIRE",
+   "license": "no license file at repo root (GitHub API license=null). Bundled guided-diffusion subfolder derives from openai/guided-diffusion; its license was not checked.",
+   "framework": "PyTorch (built on guided-diffusion and CNNDetection)",
+   "weights": "Pretrained DIRE classifier, plus the ADM diffusion model needed for reconstruction, on BaiduDrive and RecDrive (password 'dire'); the earlier OneDrive link was replaced. Size UNKNOWN; weight license UNKNOWN.",
+   "justification": "Needs a pretrained diffusion model for reconstruction plus a trained CNN classifier; nothing in it can run without torch and large weights."
+  },
+  {
+   "method": "AEROBLADE",
+   "verdict": "REQUIRES-DL-RUNTIME",
+   "repo": "https://github.com/jonasricker/aeroblade",
+   "license": "no license file (root listing has no LICENSE; GitHub API license=null)",
+   "framework": "PyTorch 2.1.2 + diffusers 0.25.1 + lpips 0.1.4",
+   "weights": "LDM autoencoders pulled from Hugging Face. SD1 (runwayml/stable-diffusion-v1-5: HF API now returns HTTP 307 redirect; the community mirror stable-diffusion-v1-5/stable-diffusion-v1-5 is tagged creativeml-openrail-m). SD2 (stabilityai/stable-diffusion-2-1-base: HF API returned HTTP 401 on 2026-10-05, so access is gated or removed). Kandinsky 2.1 (kandinsky-community/kandinsky-2-1, tagged apache-2.0). Also LPIPS VGG weights. Sizes UNKNOWN.",
+   "justification": "No training needed, but the score is the reconstruction error of the generators' own learned VAEs plus LPIPS; that cannot be done without torch and those weights."
+  },
+  {
+   "method": "multiLID",
+   "verdict": "REQUIRES-DL-RUNTIME",
+   "repo": "https://github.com/juanmals/deepfake_multiLID (paper links https://github.com/deepfake-study/deepfake-multiLID, which now returns 404; the juanmals repo is described as 'Official Implementation' and its MIT LICENSE says 'Copyright (c) 2023 deepfake-study')",
+   "license": "MIT",
+   "framework": "PyTorch 2.0.1 (requirements.txt also pins tensorflow 2.12 and jax 0.4.8); ResNet18 feature extractor; scikit-learn style classifier",
+   "weights": "Pretrained CNN (e.g., ResNet18) for feature extraction; DDPM/HF diffusion models for data generation; host and size UNKNOWN",
+   "justification": "LID is computed on features from a pretrained CNN and fed to a trained classifier; the arXiv version was withdrawn by its authors because of a serious bug."
+  },
+  {
+   "method": "ManiFPT",
+   "verdict": "REQUIRES-TRAINING-DATA",
+   "repo": "UNKNOWN. Only a project page repo exists (https://github.com/cocoaaa/manifpt-homepage, static HTML). It promised in March 2024 that the GM dataset and code would be released 'soon'; nothing was found as of 2026-10-05.",
+   "license": "UNKNOWN (no code repo; homepage repo has no license)",
+   "framework": "UNKNOWN (paper uses a ResNet50 attribution network, plus ImageNet-ResNet50 and Barlow Twins embeddings)",
+   "weights": "None released; the method uses public pretrained encoders (ImageNet ResNet50, Barlow Twins) for two of its embedding spaces",
+   "justification": "The RGB/FFT artifact (nearest-real-neighbour residual) could be computed in numpy, but it needs the real training-distribution reference set, and attribution needs a trained ResNet50 on per-model samples."
+  },
+  {
+   "method": "Causal Fingerprints",
+   "verdict": "REQUIRES-DL-RUNTIME",
+   "repo": "UNKNOWN (no code or GitHub link on the arXiv page or in the paper)",
+   "license": "UNKNOWN (no repo)",
+   "framework": "UNKNOWN. The paper describes a pretrained DIRE model, a VAE, and a CLIP-based attribution network with attention, using ResNet101, ViT and DINO embeddings.",
+   "weights": "None released; depends on pretrained DIRE/diffusion, CLIP, ResNet101, ViT, DINO models",
+   "justification": "Built on DIRE reconstruction residuals plus trained VAE and CLIP attribution networks, with no released code or weights; it needs torch, large pretrained models and training."
+  },
+  {
+   "method": "ProMark",
+   "verdict": "NOT-APPLICABLE",
+   "repo": "UNKNOWN (no official code link on arXiv or the Adobe Research publication page; GitHub repository search for 'ProMark watermarking' returned 0 results)",
+   "license": "UNKNOWN (no repository found)",
+   "framework": "UNKNOWN (paper describes learned RoSteALS secret encoder/decoder plus Latent Diffusion Models; implies a DL framework, none released)",
+   "weights": "None publicly found. The method needs a watermark encoder/decoder (RoSteALS-based) and a diffusion model trained or fine-tuned on watermarked training data.",
+   "justification": "Proactive scheme: it only works if the generator's training data was watermarked by the model owner, and the owner's decoder is needed. No code or weights are public, so it cannot be applied to arbitrary third-party images."
+  },
+  {
+   "method": "Stable Signature",
+   "verdict": "REQUIRES-DL-RUNTIME",
+   "repo": "https://github.com/facebookresearch/stable_signature",
+   "license": "CC-BY-NC-4.0 (LICENSE file: Creative Commons Attribution-NonCommercial 4.0 International). README: src/ldm and src/taming are MIT. GitHub API reports NOASSERTION.",
+   "framework": "PyTorch",
+   "weights": "Watermark extractors dec_48b.pth / dec_48b_whit.torchscript.pt and a robust variant other_dec_48b(_whit.torchscript).pt, plus the fine-tuned SD2 decoder sd2_decoder.pth, all hosted on dl.fbaipublicfiles.com/ssl_watermarking/. Sizes are not stated in the README. No separate weights licence is stated; the repository licence is CC-BY-NC-4.0.",
+   "justification": "Detection runs a learned TorchScript extractor network (public weights, CC-BY-NC) and needs the generator's secret signature to decide. Not reproducible with numpy alone."
+  },
+  {
+   "method": "Tree-Ring Watermarks",
+   "verdict": "NOT-APPLICABLE",
+   "repo": "https://github.com/YuxinWenRick/tree-ring-watermark",
+   "license": "MIT (GitHub API spdx_id MIT). Direct raw fetch of LICENSE at main and master returned 404, so the file name or location is unverified.",
+   "framework": "PyTorch (diffusers, transformers)",
+   "weights": "No method-specific weights. Uses the Stable Diffusion checkpoint (default --model_id stabilityai/stable-diffusion-2-1-base, Hugging Face), optionally OpenAI guided-diffusion 256x256 for ImageNet and OpenCLIP ViT-g-14 (laion2b_s12b_b42k) for CLIP score. Third-party weight licences were not checked in this survey.",
+   "justification": "In-generation watermark: detection needs the owner's secret key and DDIM inversion through the original diffusion model (a DL runtime), so a third-party analyst cannot apply it."
+  },
+  {
+   "method": "Gaussian Shading",
+   "verdict": "NOT-APPLICABLE",
+   "repo": "https://github.com/bsmhmmlf/Gaussian-Shading",
+   "license": "MIT (GitHub API spdx_id MIT)",
+   "framework": "PyTorch (code adapted from the Tree-Ring repository)",
+   "weights": "No method-specific weights. Needs Stable Diffusion v1.4, v2.0 or v2.1 (latent 4x64x64) and optionally OpenCLIP ViT-g-14 for CLIP score. Third-party weight licences were not checked.",
+   "justification": "Detection requires the secret cipher key and DDIM inversion through the generating SD model, so it cannot be applied to arbitrary images without the operator."
+  },
+  {
+   "method": "RingID",
+   "verdict": "NOT-APPLICABLE",
+   "repo": "https://github.com/showlab/RingID",
+   "license": "no license file (GitHub API license: null; README contains no licence text)",
+   "framework": "PyTorch (diffusers, transformers)",
+   "weights": "No method-specific weights. Uses Stable Diffusion V2 (paper).",
+   "justification": "Same detection model as Tree-Ring: it needs the secret multi-channel key and diffusion inversion with the generator, so third parties cannot verify it."
+  },
+  {
+   "method": "HiDDeN",
+   "verdict": "REQUIRES-TRAINING-DATA",
+   "repo": "https://github.com/jirenz/HiDDeN (official, Lua Torch). Popular unofficial PyTorch re-implementation: https://github.com/ando-khachatryan/HiDDeN (MIT; author says it does not yet fully reproduce the paper's results).",
+   "license": "MIT (official repo LICENSE file, copyright jirenz 2018; GitHub API MIT). Re-implementation: MIT.",
+   "framework": "Lua Torch7 (official). PyTorch for the ando-khachatryan re-implementation.",
+   "weights": "Official README: pretrained weights 'Coming soon...' (not available). Re-implementation: no pretrained weights mentioned.",
+   "justification": "Learned encoder/decoder with no official pretrained weights. Decoding needs a trained network (DL runtime) and only works for images marked by that same trained encoder."
+  },
+  {
+   "method": "StegaStamp",
+   "verdict": "REQUIRES-DL-RUNTIME",
+   "repo": "https://github.com/tancik/StegaStamp",
+   "license": "MIT (GitHub API spdx_id MIT)",
+   "framework": "TensorFlow 1.13",
+   "weights": "README refers to saved_models/stegastamp_pretrained (encoder/decoder) and a separately downloaded detector model (detector_models/stegastamp_detector). Host and size not stated in the fetched README. WAVES ships ONNX decoders for its evaluated watermarks in its /decoders folder.",
+   "justification": "Decoding needs the trained TF1 decoder (or an ONNX export), and a payload is only meaningful for images encoded with that model."
+  },
+  {
+   "method": "WAVES (watermark robustness benchmark)",
+   "verdict": "NUMPY-REIMPLEMENTABLE",
+   "repo": "https://github.com/umd-huang-lab/WAVES",
+   "license": "no license file (no LICENSE in the top-level listing; GitHub API license: null). README text says 'This project is licensed under the terms of the MIT license.'",
+   "framework": "Python/PyTorch-based (guided_diffusion, ldm, tree_ring modules). Watermark decoding via ONNX models in /decoders.",
+   "weights": "ONNX decoder models included in /decoders. Regeneration and adversarial attacks use diffusion/VAE models and surrogate classifiers (exact checkpoints not enumerated in the fetched README).",
+   "justification": "Partial only. The 8-distortion stress-test protocol and the TPR@low-FPR reporting can be reproduced with numpy/Pillow. Regeneration and adversarial attacks and the ONNX decoders need a DL runtime."
+  },
+  {
+   "method": "Regeneration attack (Zhao et al.)",
+   "verdict": "REQUIRES-DL-RUNTIME",
+   "repo": "https://github.com/XuandongZhao/WatermarkAttacker",
+   "license": "MIT (LICENSE file, copyright XuandongZhao 2023; GitHub API MIT)",
+   "framework": "PyTorch (requirements: torch, torchvision, diffusers, transformers, compressai, onnxruntime, invisible-watermark, bm3d, etc.)",
+   "weights": "Pretrained Stable Diffusion (VAE + diffusion) for Regen-Diffusion and pretrained compression VAEs (compressai) for Regen-VAE. Third-party licences were not checked.",
+   "justification": "The core attack reconstructs the image with pretrained diffusion/VAE models. Only the classical baselines (JPEG, blur, noise) are numpy/Pillow-feasible."
+  },
+  {
+   "method": "TrustMark (Adobe)",
+   "verdict": "REQUIRES-DL-RUNTIME",
+   "repo": "https://github.com/adobe/trustmark (PyPI: trustmark)",
+   "license": "MIT (root LICENSE file, copyright Adobe; GitHub API reports NOASSERTION). README: 'The MIT license covers both the code in this repo and the model files.'",
+   "framework": "PyTorch (Python package). ONNX for the JavaScript and Rust implementations. HAILO-8L NPU variant.",
+   "weights": "Downloaded on first use (not packaged). Code sets MODEL_REMOTE_HOST https://cai-watermark.adobe.net/watermarking/trustmark-models/ with md5 checksums. README says the location moved from Netlify to S3 in April 2026. Variants (CONFIG.md): Q 17MB encoder / 45MB decoder (PSNR 43-45), P 16/45MB (PSNR 48-50), C 17/21MB (ResNet-18 decoder, PSNR 38-39), B 17/45MB. Plus removal (trustmark_rm_*) and bbox detector checkpoints. Weights licence: MIT (README).",
+   "justification": "Public, keyless decoder (so applicable to third-party images), but decoding is a ResNet network needing PyTorch or ONNX plus 21-45MB weights."
+  },
+  {
+   "method": "invisible-watermark / imwatermark (DwtDct, DwtDctSvd, RivaGAN)",
+   "verdict": "NUMPY-REIMPLEMENTABLE",
+   "repo": "https://github.com/ShieldMnt/invisible-watermark",
+   "license": "MIT (GitHub API spdx_id MIT; setup.py classifier MIT)",
+   "framework": "numpy + OpenCV + PyWavelets for dwtDct/dwtDctSvd. onnxruntime for rivaGan. setup.py also lists torch.",
+   "weights": "dwtDct/dwtDctSvd: none (classical). rivaGan: rivagan_encoder.onnx and rivagan_decoder.onnx loaded from the module directory (size UNKNOWN).",
+   "justification": "dwtDct/dwtDctSvd decoding is classical Haar DWT + block DCT(+SVD) + quantisation, replicable in numpy (YUV conversion and Haar implemented by hand), with known SD/SDXL payloads. Bit-exact parity with cv2/pywt must be validated. rivaGan needs onnxruntime (REQUIRES-DL-RUNTIME)."
+  },
+  {
+   "method": "UnivFD",
+   "verdict": "REQUIRES-DL-RUNTIME",
+   "repo": "https://github.com/WisconsinAIVision/UniversalFakeDetect",
+   "license": "MIT (LICENSE file: 'Copyright (c) 2025 Wisconsin AI and Vision Lab (WAIV)')",
+   "framework": "PyTorch + torchvision; frozen CLIP ViT-L/14 image encoder with a trained linear layer (also nearest-neighbour variant in paper)",
+   "weights": "pretrained_weights/fc_weights.pth in the repo (linear-layer parameters only, '--fix_backbone'); size UNKNOWN; also needs the CLIP:ViT-L/14 backbone (obtained separately, not in repo); weights covered by repo MIT license per repo, CLIP backbone license not checked in this survey",
+   "justification": "Detection relies on CLIP ViT-L/14 deep features plus a learned linear probe; cannot be reproduced without a transformer runtime and weights."
+  },
+  {
+   "method": "LASTED",
+   "verdict": "REQUIRES-DL-RUNTIME",
+   "repo": "https://github.com/HighwayWu/LASTED",
+   "license": "MIT (GitHub API spdx_id MIT)",
+   "framework": "PyTorch 1.9.0 + OpenAI CLIP 1.0; ResNet-50x64 image encoder + transformer text encoder, image-text contrastive training",
+   "weights": "Pretrained LASTED and test sets on Google Drive (folder link in README); size UNKNOWN; training data via Baidu Pan (~120GB, 4 subsets) or Google Drive (~30GB, 3 subsets) after a license form; weights license not separately stated",
+   "justification": "Learned CLIP-style vision-language encoder (ResNet-50x64) with contrastive training; no hand-crafted core that numpy could reproduce."
+  },
+  {
+   "method": "SPAI",
+   "verdict": "REQUIRES-DL-RUNTIME",
+   "repo": "https://github.com/mever-team/spai",
+   "license": "Apache-2.0 (GitHub API; README: 'The source code and model weights of this project are released under the Apache 2 License')",
+   "framework": "PyTorch (ViT-B/16 backbone pre-trained with masked frequency modeling); Nvidia APEX for training",
+   "weights": "Trained SPAI checkpoint on Google Drive; ViT-B/16 MFM pre-trained model (mfm_pretrain_vit_base.pth) needed for training; size UNKNOWN; license Apache-2.0 per README",
+   "justification": "Although grounded in DFT spectra, the decision comes from a learned ViT frequency-reconstruction model; numpy can compute spectra but not the learned real-image spectral model."
+  },
+  {
+   "method": "PPM-CLIP",
+   "verdict": "REQUIRES-DL-RUNTIME",
+   "repo": "https://github.com/bandaidssssss/PPM_CLIP",
+   "license": "no license file (GitHub API license null; root listing has no LICENSE)",
+   "framework": "PyTorch 2.5.1 (torchvision 0.20.1), CLIP with LoRA (loralib directory), scikit-learn",
+   "weights": "Checkpoint ppm_clip_genimage.pt hosted on ModelScope (modelscope.cn/models/Noone1/PPM_CLIP); size and license UNKNOWN (ModelScope page did not render details)",
+   "justification": "CLIP backbone with learned probabilistic prompts and LoRA; entirely learned, needs torch and the checkpoint."
+  },
+  {
+   "method": "DeeCLIP",
+   "verdict": "REQUIRES-DL-RUNTIME",
+   "repo": "https://github.com/Mamadou-Keita/DeeCLIP",
+   "license": "no license file (GitHub API license null; root listing has no LICENSE)",
+   "framework": "PyTorch 2.1.2 (+cu121), transformers, peft (LoRA), CLIP-ViT backbone, DeeFuser fusion module, triplet loss",
+   "weights": "deeclip_weight_complete_with_lora_5.pth on Dropbox; size UNKNOWN; license UNKNOWN (no repo license)",
+   "justification": "LoRA-fine-tuned CLIP-ViT with learned fusion module; needs torch/transformers and the released checkpoint."
+  },
+  {
+   "method": "Synthbuster (detector)",
+   "verdict": "NUMPY-REIMPLEMENTABLE",
+   "repo": "https://github.com/qbammey/synthbuster",
+   "license": "no license file (GitHub API license null; root listing has no LICENSE). Dataset on Zenodo is CC-BY-NC-SA-4.0",
+   "framework": "numpy/scipy/scikit-learn/numba (no deep learning); features = FFT magnitude peaks of a cross-difference residual; classifier = histogram-based gradient boosting trees",
+   "weights": "models/model_jpeg.joblib (~1.33 MB) and models/model_uncompressed.joblib (~1.43 MB) in repo (scikit-learn joblib pickles); no license",
+   "justification": "Cross-difference residual + FFT peak features are pure numpy; the official decision layer is a trained scikit-learn gradient-boosting model (unlicensed pickles), so a numpy version is ADAPTED: the classifier must be refit (e.g. numpy logistic regression) on locally supplied labelled real/generated images."
+  },
+  {
+   "method": "CNNSpot",
+   "verdict": "REQUIRES-DL-RUNTIME",
+   "repo": "https://github.com/PeterWang512/CNNDetection",
+   "license": "CC-BY-NC-SA-4.0 (LICENSE.txt; GitHub API reports NOASSERTION)",
+   "framework": "PyTorch; ImageNet-pretrained ResNet-50 binary classifier trained on ProGAN with blur/JPEG augmentation",
+   "weights": "blur_jpg_prob0.5.pth and blur_jpg_prob0.1.pth via weights/download_weights.sh (Dropbox links); size UNKNOWN; covered by repo CC BY-NC-SA 4.0 (no separate weight license)",
+   "justification": "Decision is a learned ResNet-50; no hand-crafted core; weights also non-commercial."
+  },
+  {
+   "method": "NPR (Neighboring Pixel Relationships)",
+   "verdict": "REQUIRES-DL-RUNTIME",
+   "repo": "https://github.com/chuangchuangtan/NPR-DeepfakeDetection",
+   "license": "no license file (GitHub API license null; root listing has no LICENSE)",
+   "framework": "PyTorch (1.8 referenced); ResNet-style CNN applied to the NPR residual",
+   "weights": "NPR.pth (17,393,733 bytes) and model_epoch_last_3090.pth (5,842,385 bytes) in repo; additional GenImage checkpoints on Google Drive/Baidu; no license",
+   "justification": "The NPR residual (x minus nearest-neighbour up-sampled down-sampled x) is trivially computable in numpy, but the real/fake decision comes from a learned CNN on that residual; numpy alone gives only an ADAPTED residual statistic."
+  },
+  {
+   "method": "B-Free (bias-free training)",
+   "verdict": "REQUIRES-DL-RUNTIME",
+   "repo": "https://github.com/grip-unina/B-Free",
+   "license": "Custom GRIP-UNINA non-commercial license (LICENSE.txt; not SPDX; GitHub API reports NOASSERTION): use/reproduction/modification only for informational and nonprofit purposes; industrial or profit-oriented use prohibited; attribution required",
+   "framework": "PyTorch ('Official PyTorch implementation'); backbone DINOv2 with registers (ViT) + fully connected layer",
+   "weights": "Required. https://www.grip.unina.it/download/prog/B-Free/weights/BFREE_dino2reg4.zip (MD5 f3f53fa647848b16cf81c913f148a198); size UNKNOWN; separate weight license UNKNOWN (repo license is non-commercial)",
+   "justification": "Detector is a fine-tuned DINOv2+reg ViT; the signal lives entirely in learned weights, which are also non-commercial-licensed."
+  },
+  {
+   "method": "CO-SPY (semantic + pixel artifact fusion) and CO-SPY-Bench",
+   "verdict": "REQUIRES-DL-RUNTIME",
+   "repo": "https://github.com/Megum1/Co-Spy",
+   "license": "MIT (LICENSE: 'Copyright (c) 2025 Siyuan Cheng')",
+   "framework": "PyTorch 2.4.1 / torchvision 0.19.1",
+   "weights": "Required. pretrained/download.sh fetches from Hugging Face repo ruojiruoli/Co-Spy-Pretrained-Weights (progan.zip for CNNDet/ProGAN training; DRCT-2M/SD v1.4 variant); size UNKNOWN; weight license not stated (UNKNOWN)",
+   "justification": "Fuses a CLIP-style semantic encoder with a learned pixel-artifact branch; both need torch and downloaded weights."
+  },
+  {
+   "method": "AIDE (AI-generated Image DEtector) + Chameleon dataset",
+   "verdict": "REQUIRES-DL-RUNTIME",
+   "repo": "https://github.com/shilinyan99/AIDE",
+   "license": "MIT (LICENSE: 'Copyright (c) 2024 Shilin Yan'). Chameleon dataset: academic research only, commercial use prohibited, access by email request",
+   "framework": "PyTorch 2.0.1; CLIP (OpenCLIP) semantic embeddings + frequency/patch low-level experts (ResNet50, ConvNeXt)",
+   "weights": "Required. AIDE checkpoints on Google Drive (folder 1qx76UFvDpgCxaPLBCmsA2WY-SSzeJrd4); also pretrained ResNet50 and OpenCLIP; sizes UNKNOWN; weight license UNKNOWN",
+   "justification": "Combines CLIP embeddings and learned CNN experts; the DCT patch-selection front end is numpy-friendly but the classifier needs weights."
+  },
+  {
+   "method": "Community Forensics (thousands-of-generators training)",
+   "verdict": "REQUIRES-DL-RUNTIME",
+   "repo": "https://github.com/JeongsooP/Community-Forensics",
+   "license": "MIT (LICENSE: 'Copyright (c) 2025 Jeongsoo Park'). Dataset: CC-BY-4.0 'for research purposes'; individual images keep source model licenses (mostly CreativeML OpenRAIL-M)",
+   "framework": "PyTorch (torchrun DDP), huggingface-hub, transformers; ViT-based classifier",
+   "weights": "Required. Hugging Face OwensLab/commfor-model-384 and OwensLab/commfor-model-224 (model card: MIT, 21.8M params, F32 safetensors; byte size UNKNOWN); PyTorch checkpoints also on Dropbox",
+   "justification": "Learned ViT classifier; MIT weights are small (21.8M params) so an ONNX export would be the most license-friendly DL option, but it still needs a DL runtime."
+  },
+  {
+   "method": "WaRPAD (training-free, cropping robustness)",
+   "verdict": "REQUIRES-DL-RUNTIME",
+   "repo": "https://github.com/sungikchoi/WaRPAD",
+   "license": "no license file (repo root lists README.md, final_imgn.py, requirements.txt, roc_tpr.py, utils.py; /blob/main/LICENSE returns 404)",
+   "framework": "PyTorch 2.8.0 / torchvision 0.23.0, pytorch-wavelets 1.3.0 (Haar DWT), diffusers, kornia; DINOv2 ViT-L/14 via torch.hub",
+   "weights": "No detector training; requires a self-supervised backbone (DINOv2 ViT-L/14 via torch.hub 'facebookresearch/dinov2'; paper also tests CLIP, SwAV, DINO, BEiT, ViTMAE); backbone size/license not stated in repo (UNKNOWN)",
+   "justification": "Training-free, but the score is computed in DINOv2 embedding space; the Haar perturbation is numpy-trivial, the backbone is not."
+  },
+  {
+   "method": "Manifold Induced Biases (zero-/few-shot, diffusion score-function curvature)",
+   "verdict": "REQUIRES-DL-RUNTIME",
+   "repo": "https://github.com/JonathanBrok/Manifold-Induced-Biases-for-Zero-shot-and-Few-shot-Detection-of-Generated-Images",
+   "license": "no license file (none visible in fetched repository page)",
+   "framework": "PyTorch with Hugging Face diffusers and transformers",
+   "weights": "Requires pretrained Stable Diffusion v1.4 (paper also validates SD v2 Base and Kandinsky 2.1); host/size not stated in README (UNKNOWN); SD weight license not verified in this survey",
+   "justification": "Needs a full Stable Diffusion model and dozens of score evaluations per image."
+  },
+  {
+   "method": "Forensic Self-Descriptions (FSD): zero-shot detection, open-set attribution, clustering",
+   "verdict": "REQUIRES-TRAINING-DATA",
+   "repo": "UNKNOWN (no code link on arXiv abstract or in paper HTML; searches found no official repository)",
+   "license": "UNKNOWN (no code found)",
+   "framework": "Paper: K=8 learnable linear predictive filters (11x11 neighbourhood, centre weight 0, weights sum to 1) learned on real images with AdamW + spectral-diversity regulariser; per-image self-description = linear residual-model parameters over L=3 scales; Gaussian Mixture Model scoring",
+   "weights": "Learned linear filters + GMM fitted on real images only (COCO2017, ImageNet-1k/22k, MIDB); not released (UNKNOWN)",
+   "justification": "All components are linear filters, least-squares residual models and a GMM (numpy-feasible), but faithful use needs filters and a GMM fitted on a large real-image corpus and no official code exists; a numpy version would be an ADAPTED method."
+  },
+  {
+   "method": "VINE watermark + W-Bench (watermark robustness to generative editing)",
+   "verdict": "REQUIRES-DL-RUNTIME",
+   "repo": "https://github.com/Shilin-LU/VINE",
+   "license": "LICENSE file is the 'NANYANG TECHNOLOGICAL UNIVERSITY - NTUITIVE PTE LTD Dual License Agreement', 'Non-Commercial Use Only' (not SPDX). A WebFetch summary of the repo page said 'MIT'; the LICENSE file itself contradicts that",
+   "framework": "PyTorch; VINE encoder built on SDXL-Turbo (diffusers); accelerate for multi-GPU training",
+   "weights": "Required for embedding/decoding: VINE-B-Enc/Dec and VINE-R-Enc/Dec on Hugging Face; sizes UNKNOWN; weight license UNKNOWN",
+   "justification": "Watermark encoder/decoder are neural (SDXL-Turbo based); W-Bench images could be used offline as test data but the harness needs torch/diffusers."
+  },
+  {
+   "method": "UnMarker (universal watermark removal attack)",
+   "verdict": "NOT-APPLICABLE",
+   "repo": "https://github.com/andrekassis/ai-watermark",
+   "license": "Custom 'Source Code License for UnMarker' (not SPDX; GitHub API: NOASSERTION): royalty-free copyright grant, but Section 3.3 Use Limitation - 'may be used or intended for use non-commercially' (research or evaluation only)",
+   "framework": "PyTorch",
+   "weights": "Attack needs no detector; harness downloads original authors' watermark models via download_data_and_models.sh (sizes UNKNOWN)",
+   "justification": "An attack, not a detector or fingerprint; nothing to ship, but evidence that 'no watermark found' after editing proves nothing."
+  },
+  {
+   "method": "SynthID-Image (Google DeepMind production watermark)",
+   "verdict": "NOT-APPLICABLE",
+   "repo": "none (no code or weights released)",
+   "license": "N/A (no code)",
+   "framework": "Deep-learning post-hoc, model-independent watermark (per abstract); implementation not released",
+   "weights": "Not released; verification service for trusted testers; external variant SynthID-O via partnerships",
+   "justification": "No code, weights or local detector exist; only Google-hosted verification, so it cannot be reproduced locally."
+  }
+ ],
+ "datasets": [
+  {
+   "name": "ForenSynths (CNNDetection / CNNSpot train-val-test sets)",
+   "url": "https://github.com/PeterWang512/CNNDetection",
+   "license": "CC BY-NC-SA 4.0 (repository LICENSE.txt, copyright 2020 the authors); no separate dataset-specific licence stated in README",
+   "size": "Training set: ProGAN fakes + LSUN reals in 20 object categories; validation: held-out ProGAN; test: 13 synthesis algorithms. Exact image counts / GB: UNKNOWN (not stated on the fetched page)",
+   "generators": "Train: ProGAN. Test: ProGAN, StyleGAN, StyleGAN2, BigGAN, CycleGAN, StarGAN, GauGAN, CRN, IMLE, SITD, SAN, Deepfake, whichfaceisreal.com"
+  },
+  {
+   "name": "GenImage",
+   "url": "https://github.com/GenImage-Dataset/GenImage",
+   "license": "Custom licence file 'License' (GitHub SPDX: NOASSERTION / 'Other'), based on CC BY-NC-SA 4.0 with additional terms: non-commercial use only (academic research, teaching, scientific publications)",
+   "size": "Over one million <fake, real> image pairs; GB size UNKNOWN (not stated on fetched pages)",
+   "generators": "Midjourney, Stable Diffusion V1.4, Stable Diffusion V1.5, ADM, GLIDE, Wukong, VQDM, BigGAN (ImageNet 1000 classes)"
+  },
+  {
+   "name": "Synthbuster dataset",
+   "url": "https://zenodo.org/records/10066460",
+   "license": "Zenodo record: CC BY-NC-SA 4.0 (synthetic images). GitHub code repo qbammey/synthbuster: no LICENSE file visible. Real images (RAISE-1k) come from the separate RAISE dataset under its own terms (UNKNOWN, not fetched)",
+   "size": "9,000 synthetic images (1,000 per generator), 12.4 GB; paired with RAISE-1k real images",
+   "generators": "DALL-E 2, DALL-E 3, Adobe Firefly, Midjourney v5, Stable Diffusion 1.3, 1.4, 2, XL, GLIDE"
+  },
+  {
+   "name": "DiffusionForensics (DIRE benchmark)",
+   "url": "https://github.com/ZhendongWang6/DIRE",
+   "license": "no license file (repo sidebar shows no licence, no LICENSE in top-level files); dataset licence UNKNOWN",
+   "size": "Paper Table 1: LSUN-Bedroom ADM/DDPM/iDDPM/PNDM 42k real/42k fake each (40k/1k/1k splits), LDM/SD-v1/SD-v2/VQ-Diffusion 1k/1k each; ImageNet ADM 50k/50k (50k/5k/5k), SD-v1 10k/10k. Total GB UNKNOWN",
+   "generators": "LSUN-Bedroom: ADM, DDPM, iDDPM, PNDM, LDM, SD-v1, SD-v2, VQ-Diffusion; ImageNet: ADM, SD-v1. README directory tree also lists a CelebA-HQ subset whose generators are not enumerated on the fetched pages"
+  },
+  {
+   "name": "WildFake",
+   "url": "https://github.com/hy-zpg/AIGC-Image-Detection-Dataset",
+   "license": "UNKNOWN (not stated on GitHub page; ModelScope page content did not load)",
+   "size": "3,694,313 images: 2,680,867 fake, 1,013,446 real (per arXiv/ar5iv paper)",
+   "generators": "Hierarchical: GANs (e.g. StyleGAN, BigGAN, StarGAN, DF-GAN, GALIP, GigaGAN), diffusion models (SD, DDPM, DDIM, ADM, DALLE, Imagen, Midjourney, VQDM), others (VQVAE, VQGAN, MaskGit, Muse)"
+  },
+  {
+   "name": "Chameleon (AIDE)",
+   "url": "https://github.com/shilinyan99/AIDE",
+   "license": "Dataset: 'Chameleon is only used for academic research. Commercial use in any form is prohibited.' (README). AIDE code repo: MIT (GitHub licence metadata). Paper states each collected image has a CC BY 4.0 licence or explicit owner permission",
+   "size": "Approx. 26,000 test images: 11,170 AI-generated, 14,863 real; 720p-4K resolution",
+   "generators": "AI images from ArtStation, Civitai, Liblib communities (Midjourney, DALL-E 3, Stable Diffusion + LoRA modules); reals from Unsplash. Categories: human, animal, object, scene"
+  },
+  {
+   "name": "Community Forensics",
+   "url": "https://huggingface.co/datasets/OwensLab/CommunityForensics",
+   "license": "HF card (main dataset): cc-by-4.0, described as for research purposes; generated images retain source-model licences (most CreativeML OpenRAIL-M). HF card (CommunityForensics-Eval): cc-by-nc-sa-4.0. Code repo: MIT (README). Licences differ between the train and eval cards",
+   "size": "2,760,270 images, 1.08 TB (HF card); README: full 1.1 TB, small version 278 GB, eval set 206 GB",
+   "generators": "4,803 generator models (mostly community diffusion models); reals from LAION, ImageNet, COCO, FFHQ and others"
+  },
+  {
+   "name": "DRCT-2M",
+   "url": "https://modelscope.cn/datasets/BokingChen/DRCT-2M",
+   "license": "UNKNOWN: GitHub repo has no LICENSE file; ModelScope page content did not load",
+   "size": "'million-scale', 16 diffusion models (abstract); name implies ~2M images; exact count/GB UNKNOWN",
+   "generators": "16 diffusion models (abstract). Secondary source (search snippet, not a primary page): 10 Stable Diffusion variants for T2I with MSCOCO prompts, 3 ControlNet variants and 3 SD inpainting variants for I2I. README confirms SD v1.4 and SD inpainting paths; reals from MSCOCO train2017"
+  },
+  {
+   "name": "UniversalFakeDetect diffusion test set (Ojha et al.)",
+   "url": "https://github.com/WisconsinAIVision/UniversalFakeDetect",
+   "license": "Code: MIT (README). Dataset licence: not stated (UNKNOWN)",
+   "size": "Released: 1k fake + 1k real images per domain (paper reported on 10k per domain)",
+   "generators": "LDM, GLIDE, Guided/ADM, DALL-E mini (the paper also uses the ForenSynths GAN test set)"
+  },
+  {
+   "name": "ArtiFact",
+   "url": "https://github.com/awsaf49/artifact",
+   "license": "Mixed: different parts inherit source licences (CC BY-NC-SA 4.0, CC BY-NC 4.0, MIT, Apache-2.0, BSD, non-commercial terms)",
+   "size": "2,496,738 images: 964,989 real, 1,531,749 fake; GB UNKNOWN",
+   "generators": "25 methods: 13 GANs (StyleGAN1/2/3, BigGAN, CycleGAN, StarGAN, ProGAN, GANformer, ProjectedGAN, CIPS, Generative Inpainting, Taming Transformer, GauGAN), 7 diffusion (Stable Diffusion, DDPM, Latent Diffusion, VQ Diffusion, Palette, Denoising Diffusion GAN, DiffusionGAN), 5 misc (incl. GLIDE, MAT, LaMa)"
+  },
+  {
+   "name": "ImagiNet",
+   "url": "https://huggingface.co/datasets/delyanboychev/imaginet",
+   "license": "Mixed: real images keep source licences; SD v2.1 / SDXL / Animagine XL / StyleGAN3 / StyleGAN-XL synthetic images CC BY 4.0; a DALL-E 3 folder CC0; Midjourney images under the JourneyDB licence",
+   "size": "200,000 images, 144 GB (HF card); categories photos, paintings, faces, uncategorized",
+   "generators": "Stable Diffusion v2.1, SDXL v1.0, Animagine XL, StyleGAN3, StyleGAN-XL, DALL-E 3, Midjourney"
+  },
+  {
+   "name": "OpenFake",
+   "url": "https://huggingface.co/datasets/ComplexDataLab/OpenFake",
+   "license": "Current HF card: CC BY-NC 4.0. (A web-search snippet of an earlier card revision showed CC-BY-NC-SA-4.0; the current card, which was fetched, says CC-BY-NC-4.0)",
+   "size": "Paper: ~3M real + ~1M synthetic images. HF card: 2.45M images in core subset (2.3M train, 58.5k val, 91.4k test rows)",
+   "generators": "75 models listed on HF card incl. Stable Diffusion 1.5/2.1/3.5, SDXL variants, Flux variants, Imagen 4.0, fine-tunes; reals from LAION and Pexels"
+  }
+ ],
+ "tools": [
+  {
+   "name": "c2patool",
+   "role": "C2PA manifest validation (optional, external)",
+   "version": "0.28.1",
+   "license": "MIT OR Apache-2.0",
+   "url": "https://github.com/contentauth/c2pa-rs"
+  },
+  {
+   "name": "c2pa-python",
+   "role": "C2PA validation via Python (optional)",
+   "version": "0.38.0",
+   "license": "MIT OR Apache-2.0",
+   "url": "https://github.com/contentauth/c2pa-python"
+  },
+  {
+   "name": "ExifTool",
+   "role": "Richer metadata extraction (optional, external)",
+   "version": "user-installed",
+   "license": "Perl Artistic / GPL",
+   "url": "https://exiftool.org"
+  },
+  {
+   "name": "SynthID (official)",
+   "role": "Google watermark; local image detector UNAVAILABLE",
+   "version": "service-defined",
+   "license": "Google service terms",
+   "url": "https://deepmind.google/technologies/synthid/"
+  }
+ ]
+}

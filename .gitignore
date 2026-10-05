@@ -1,0 +1,10 @@
+.venv/
+runtime/
+build/
+dist/
+workspace/
+__pycache__/
+*.pyc
+*.partial
+.pytest_cache/
+*.spec.bak

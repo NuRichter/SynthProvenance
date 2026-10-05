@@ -1,0 +1,15 @@
+{
+  "workspace": "",
+  "max_megapixels": 0,
+  "max_file_mb": 4096,
+  "statistics_max_pixels": 16000000,
+  "use_exiftool": true,
+  "exiftool_path": "",
+  "c2patool_path": "",
+  "use_c2pa_python": true,
+  "synthid_engine_command": [],
+  "default_sanitize_profile": "BALANCED",
+  "network_access": "DISABLED",
+  "language": "en",
+  "ui_mode": "EASY"
+}

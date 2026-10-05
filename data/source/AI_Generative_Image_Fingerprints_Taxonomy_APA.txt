@@ -1,0 +1,1340 @@
+AI GENERATIVE IMAGE FINGERPRINTS
+TAXONOMY FORENSIK GAMBAR DIGITAL
+Versi TXT — Bahasa Indonesia
+Fokus: Digital Image Forensics, Deep Learning, Generative Models, GAN, Diffusion, Watermarking, dan Detector Representations
+
+CATATAN TERMINOLOGI
+===================
+Istilah "fingerprint", "artifact", "trace", "signature", "cue", dan "watermark" tidak selalu dipakai secara identik di seluruh literatur.
+
+Secara praktis:
+- Artifact = jejak/ketidaksempurnaan yang muncul dari proses sintesis atau pipeline generasi.
+- Fingerprint = representasi atau pola yang relatif stabil dan dapat dipakai untuk membedakan atau mengatribusikan model/source/proses generasi.
+- Trace = jejak forensik yang tersisa pada output.
+- Signature = istilah umum untuk pola identitas.
+- Watermark = sinyal yang sengaja ditanam untuk provenance, attribution, ownership, atau detection.
+- Detector representation = fitur/embedding yang dipelajari atau digunakan detector. Ini tidak otomatis sama dengan intrinsic fingerprint.
+- C2PA / Content Credentials = provenance/authenticity infrastructure berbasis metadata dan tanda tangan kriptografis, bukan intrinsic image fingerprint.
+
+------------------------------------------------------------
+1. INTRINSIC / INHERENT MODEL FINGERPRINTS
+------------------------------------------------------------
+
+DEFINISI
+--------
+Intrinsic/inherent fingerprints adalah jejak yang muncul secara alami dari generator/model, tanpa harus menyisipkan watermark secara eksplisit. Sumbernya dapat berupa arsitektur, bobot, checkpoint, proses training, operator upsampling, decoder, sampling process, atau karakteristik implementasi generator.
+
+ALIAS / NOMENKLATUR UMUM
+------------------------
+- Model Fingerprint
+- Generative Model Fingerprint
+- Generator Fingerprint
+- Generative Model Signature
+- Generator Signature
+- Model Signature
+- Source Fingerprint
+- Source Signature
+- Generative Fingerprint
+- Synthesis Fingerprint
+- Synthesis Trace
+- Generative Trace
+- Model-Specific Trace
+- Model-Specific Artifact
+- Generator-Specific Artifact
+- Model-Dependent Artifact
+- Generation Artifact
+- Synthesis Artifact
+- Forensic Trace
+- Forensic Signature
+- Intrinsic Fingerprint
+- Inherent Fingerprint
+- Passive Fingerprint
+- Architectural Fingerprint
+- Architecture-Level Fingerprint
+- Instance-Level Fingerprint
+- Checkpoint-Level Fingerprint
+- Weight-Level Fingerprint
+- Model-Level Fingerprint
+
+1A. GAN FINGERPRINTS
+--------------------
+Istilah:
+- GAN Fingerprint
+- GAN Model Fingerprint
+- GAN-Specific Fingerprint
+- GAN Architecture Fingerprint
+- GAN Instance Fingerprint
+- GAN Fingerprint Residual
+- GAN Noise Residual
+- GAN Pattern Noise
+- GAN Forensic Noise
+- GAN Source Noise
+- Synthetic Pattern Noise
+
+Paper kunci:
+- "Do GANs Leave Artificial Fingerprints?"
+- "Attributing Fake Images to GANs: Learning and Analyzing GAN Fingerprints"
+
+Konsep utama:
+- GAN-generated images dapat membawa pola stabil yang dapat dipakai untuk source/model attribution.
+- Fingerprint dapat dipandang sebagai residual/pattern noise yang relatif konsisten di antara banyak output dari source yang sama.
+- Bahkan perbedaan kecil pada training procedure dapat menghasilkan fingerprint berbeda.
+- Fingerprint yang dipelajari dapat digunakan untuk real-vs-fake detection dan source attribution.
+
+1B. PRNU-INSPIRED / RESIDUAL-BASED FINGERPRINTS
+-----------------------------------------------
+ALIAS:
+- PRNU-inspired Fingerprinting
+- Photo-Response Non-Uniformity-inspired Fingerprint
+- Pattern Noise Fingerprint
+- Sensor Noise Analogy
+- Noise Residual Fingerprint
+- Residual Fingerprint
+- Pattern Noise Residual
+- Source Noise Pattern
+- Averaged Noise Residual
+- Residual-based Source Attribution
+
+IDE:
+- Ekstraksi residual dilakukan dengan memisahkan konten utama dari komponen berfrekuensi tinggi/noise-like.
+- Residual dari banyak sampel dapat dirata-ratakan untuk menekan komponen acak dan mempertahankan pola source/model.
+
+Bentuk konseptual:
+  R_i = X_i - Denoise(X_i)
+  F_hat = (1/N) * sum_i R_i
+
+Catatan:
+- Analogi PRNU dipakai sebagai inspirasi forensik.
+- Jangan menganggap fingerprint GAN identik dengan sensor PRNU kamera. Keduanya berbeda sumber dan mekanisme pembentukan.
+
+1C. LEARNED MODEL / IMAGE FINGERPRINTS
+---------------------------------------
+ALIAS:
+- Learned GAN Fingerprint
+- Learned Model Fingerprint
+- Feature-Domain Fingerprint
+- Image Fingerprint
+- Model Fingerprint
+- Fingerprint Visualization
+- Fingerprint Attribution
+- Fingerprint Classifier
+- Explicit Fingerprint
+- Implicit Fingerprint
+- Learned Forensic Fingerprint
+
+Paper:
+"Attributing Fake Images to GANs: Learning and Analyzing GAN Fingerprints"
+
+Poin penting:
+- Image Fingerprint dapat dipandang sebagai fingerprint yang diperoleh dari satu image.
+- Model Fingerprint menangkap identitas generator/model yang stabil di antara banyak output.
+- Fingerprint dipakai untuk attribution.
+- Robustness dapat diuji terhadap perturbasi dan transformasi.
+
+1D. ARCHITECTURE-LEVEL VS INSTANCE-LEVEL FINGERPRINT
+-----------------------------------------------------
+Nomenklatur:
+- Architecture-Level Fingerprint
+- Architecture-Specific Fingerprint
+- Architecture-Level Attribution
+- Model-Level Fingerprint
+- Instance-Level Fingerprint
+- Model-Instance Fingerprint
+- Weight-Level Trace
+- Checkpoint-Level Trace
+- Training-Process Fingerprint
+- Architecture Attribution
+
+Paper utama:
+"Deepfake Network Architecture Attribution"
+
+Metode:
+- DNA-Det = Deepfake Network Architecture Attribution Detector.
+
+Interpretasi:
+- Architecture-level fingerprint: pola yang lebih global dan berhubungan dengan desain jaringan.
+- Instance-level fingerprint: pola yang lebih terkait dengan checkpoint/bobot/training configuration.
+- Dua model dengan arsitektur sama tetapi training berbeda dapat memiliki fingerprint yang berbeda.
+- DNA-Det mencoba mengatribusikan fake image ke architecture-level meskipun model mengalami retraining atau fine-tuning.
+
+1E. DISENTANGLED GAN FINGERPRINTS
+---------------------------------
+Nomenklatur:
+- Disentangled GAN Fingerprint
+- Fingerprint Disentanglement
+- GAN Fingerprint Disentangling
+- Content-Irrelevant Fingerprint
+- Content-Invariant Fingerprint
+- Semantic-Invariant Fingerprint
+- Content-Independent Representation
+- Fingerprint Feature Representation
+
+Metode:
+- GFD-Net = GAN Fingerprint Disentangling Network.
+
+Tujuan:
+- Memisahkan fingerprint dari konten semantik image.
+- Menghindari detector terlalu bergantung pada content-specific cues.
+- Menghasilkan representasi yang lebih dapat digeneralisasikan ke generator lain.
+
+1F. MULTI-LEVEL GAN FINGERPRINTS
+-------------------------------
+Nomenklatur:
+- Multi-Level Fingerprint
+- Architecture-Level Fingerprint
+- Instance-Level Fingerprint
+- Task-Specific Fingerprint
+- Fingerprint Dependency
+- Fingerprint Decoupling
+- Signal-Domain-Specific Fingerprint
+- Frequency-Domain Fingerprint
+- Spatial-Domain Fingerprint
+
+Paper:
+"Disentangling Different Levels of GAN Fingerprints for Task-Specific Forensics"
+
+Gagasan:
+- Fingerprint dapat mempunyai beberapa level identitas.
+- Sinyal pada domain tertentu dapat lebih informatif untuk level atribusi tertentu.
+- Paper ini membahas pemisahan architecture-level dan instance-level fingerprint untuk task forensics yang berbeda.
+
+1G. DIFFUSION / LATENT DIFFUSION INTRINSIC FINGERPRINTS
+------------------------------------------------------
+Nomenklatur:
+- Diffusion Model Fingerprint
+- Diffusion Fingerprint
+- Diffusion-Specific Fingerprint
+- Latent Diffusion Fingerprint
+- Diffusion Generation Trace
+- Denoising Trace
+- Sampling Trace
+- Diffusion Reconstruction Residual
+- Latent-Space Fingerprint
+- Autoencoder Fingerprint
+- Diffusion-Specific Artifact
+- Diffusion Forensic Trace
+
+Metode/paper terkait:
+- DE-FAKE
+- DIRE = DIffusion Reconstruction Error
+- AEROBLADE = Training-Free Detection of Latent Diffusion Images Using Autoencoder Reconstruction Error
+
+Catatan:
+- Pada diffusion/LDM, reconstruction behavior juga dapat menjadi forensic cue.
+- DIRE mengukur perbedaan antara input image dan reconstruction menggunakan diffusion model pretrained.
+- AEROBLADE memanfaatkan autoencoder yang merupakan komponen inheren LDM dan mengevaluasi reconstruction error.
+
+------------------------------------------------------------
+2. CAUSAL FINGERPRINTS
+------------------------------------------------------------
+
+DEFINISI
+--------
+Causal Fingerprint adalah pendekatan yang lebih baru dan lebih khusus daripada istilah model fingerprint generik. Fokusnya adalah membuat fingerprint merepresentasikan hubungan kausal antara provenance/source model dan trace yang diamati, sekaligus memisahkannya dari image content dan style.
+
+PAPER UTAMA
+-----------
+"Causal Fingerprints of AI Generative Models"
+
+NOMENKLATUR:
+- Causal Fingerprint
+- Causal Model Fingerprint
+- Causal Generative Fingerprint
+- Causally Grounded Fingerprint
+- Causality-Grounded Fingerprint
+- Causal Source Fingerprint
+- Causal Model Trace
+- Causal Representation of Model Identity
+- Causality-Decoupled Fingerprint
+- Causally Disentangled Fingerprint
+- Counterfactual Fingerprint
+- Fingerprint as a Causal Variable
+
+2A. CAUSALITY-DECOUPLING
+------------------------
+Istilah:
+- Causality-Decoupling Framework
+- Causal Decoupling
+- Causal Disentanglement
+- Content-Style-Fingerprint Disentanglement
+- Semantic-Invariant Latent Space
+- SILS = Semantic-Invariant Latent Space
+- Semantic-Invariant Embedding Space
+
+Tujuan:
+- Memisahkan content-specific information.
+- Memisahkan style-specific information.
+- Mempertahankan informasi fingerprint yang terkait dengan source/model.
+
+2B. MULTI-SPACE / MULTI-REPRESENTATION CAUSAL FINGERPRINT
+----------------------------------------------------------
+Representasi yang dapat dipakai dalam framework ini mencakup:
+- RGB Space
+- DCT Frequency Space
+- Fourier / QFT-derived representation
+- Supervised Learning Representation
+- Vision Transformer Representation
+- Self-Supervised Representation
+- DINO Representation
+- ResNet Representation
+- ViT Representation
+
+Istilah:
+- Multi-Space Feature Fusion
+- Diverse Feature Representation
+- Fine-Grained Causal Fingerprint
+- Representation Fusion
+- Semantic-Invariant Feature Fusion
+
+2C. COUNTERFACTUAL FINGERPRINT
+------------------------------
+Nomenklatur:
+- Counterfactual Fingerprint
+- Counterfactual Model Identity
+- Fingerprint Intervention
+- Fingerprint Swapping
+- Fingerprint Anonymization
+- Source Anonymization
+- Model Identity Obfuscation
+- Counterfactual Attribution
+- Interventional Attribution
+
+Ide:
+- Bila fingerprint dianggap sebagai representasi sebab/provenance, dapat dilakukan intervensi terhadap fingerprint sambil berusaha mempertahankan karakteristik image yang diinginkan.
+- Counterfactual examples digunakan untuk menguji apakah source identity benar-benar terkait dengan fingerprint.
+
+2D. OPTIMIZATION / ATTACK TERMINOLOGY
+--------------------------------------
+- Projected Gradient Descent (PGD)
+- Fingerprint-Constrained PGD
+- Counterfactual Generation
+- Source Anonymization
+- Identity Protection
+
+CATATAN KONSEPTUAL:
+- "Causal fingerprint" jangan digunakan sebagai sinonim universal untuk semua GAN/diffusion fingerprint.
+- Dalam literature taxonomy, lebih aman menempatkannya sebagai subfamily baru yang berusaha memberikan dasar kausal pada model attribution.
+
+------------------------------------------------------------
+3. FREQUENCY-DOMAIN / SPECTRAL FINGERPRINTS
+------------------------------------------------------------
+
+DEFINISI
+--------
+Fingerprint atau forensic cue yang muncul pada distribusi energi, koefisien transformasi, pola periodik, atau statistik spektral image.
+
+ALIAS / NOMENKLATUR:
+- Frequency-Domain Fingerprint
+- Spectral Fingerprint
+- Spectral Signature
+- Frequency Fingerprint
+- Frequency-Domain Artifact
+- Spectral Artifact
+- Spectral Trace
+- Frequency-Domain Trace
+- Power-Spectrum Fingerprint
+- Fourier Fingerprint
+- DCT Fingerprint
+- DWT Fingerprint
+- Wavelet Fingerprint
+- High-Frequency Fingerprint
+- High-Frequency Artifact
+- Spectral Discrepancy
+- Spectral Mismatch
+- Frequency Mismatch
+- Frequency Bias
+- Spectral Bias
+- Spectral Irregularity
+- Spectral Inconsistency
+- Periodic Artifact
+- Quasi-Periodic Artifact
+- Aliasing Artifact
+- Upsampling Artifact
+- Checkerboard Artifact
+- Grid Artifact
+- Grid-Like Pattern
+- Periodic Grid Pattern
+- Spectral Peak
+- Spectral Distribution Deviation
+- Power-Law Decay Deviation
+- High-Frequency Tail Anomaly
+- Ultra-High-Frequency Tail Anomaly
+
+3A. FOURIER / DFT / FFT
+-----------------------
+Istilah:
+- Discrete Fourier Transform (DFT)
+- 2D DFT
+- Fast Fourier Transform (FFT)
+- 2D FFT
+- Fourier Spectrum
+- Magnitude Spectrum
+- Log-Magnitude Spectrum
+- Power Spectrum
+- Power Spectral Density
+- Radial Power Spectrum
+- Radially Averaged Power Spectrum
+- Spectral Energy Distribution
+- Spectral Decay
+- Radial Frequency Profile
+
+Kegunaan:
+- Melihat perbedaan distribusi energi antara real dan synthetic images.
+- Mengidentifikasi pola periodik/peaks yang terkait dengan proses synthesis.
+- Menganalisis high-frequency behavior.
+
+Paper penting:
+"Leveraging Frequency Analysis for Deep Fake Image Recognition"
+"Watch Your Up-Convolution: CNN Based Generative Deep Neural Networks Are Failing to Reproduce Spectral Distributions"
+"On the Frequency Bias of Generative Models"
+
+3B. CHECKERBOARD / GRID / ALIASING
+----------------------------------
+Istilah:
+- Checkerboard Artifacts
+- Checkerboard Pattern
+- Grid Artifacts
+- Grid-Like Artifacts
+- Periodic Grid
+- Quasi-Periodic Artifacts
+- Aliasing Patterns
+- Spectral Aliasing
+- Upsampling Artifacts
+- Transposed-Convolution Artifacts
+- Deconvolution Artifacts
+- Up-Convolution Artifacts
+
+Sumber umum:
+- Transposed convolution
+- Nearest-neighbor/bilinear upsampling + convolution
+- Implementasi upsampling tertentu
+- Resampling operations
+
+CATATAN:
+- Checkerboard artifact adalah salah satu cue, bukan definisi lengkap fingerprint.
+- Tidak semua generator modern memiliki checkerboard yang sama.
+- Spectral mismatch bisa tetap ada walau checkerboard visual tidak menonjol.
+
+3C. SPECTRAL BIAS / HIGH-FREQUENCY DISCREPANCY
+----------------------------------------------
+Istilah:
+- Spectral Bias
+- Frequency Bias
+- High-Frequency Bias
+- High-Frequency Discrepancy
+- High-Frequency Mismatch
+- High-Frequency Error
+- Spectral Distribution Mismatch
+- Spectral Statistics Mismatch
+- Excess High-Frequency Energy
+- Ultra-High-Frequency Tail
+- Spectral Tail Anomaly
+- Power-Law Decay Deviation
+
+Modern direction:
+- 1D Radial Log-Power Spectrum
+- Power-Law Decay
+- Ultra-High-Frequency Tail Analysis
+- Spectral Tail Auxiliary Learning
+
+3D. DCT
+--------
+Istilah:
+- Discrete Cosine Transform (DCT)
+- 2D DCT
+- DCT Spectral Analysis
+- DCT Frequency Features
+- DCT Coefficient Features
+- DCT-Domain Fingerprint
+- Block-DCT Features
+- JPEG-Domain Frequency Features
+- Quantized DCT Coefficients
+
+Terkait:
+- DCT-based GAN detection
+- DCT-based source attribution
+- DCT spectral classifier
+- Benford-law features on DCT coefficients
+
+3E. DWT / WAVELET
+-----------------
+Istilah:
+- Discrete Wavelet Transform (DWT)
+- Wavelet Transform
+- Wavelet-Domain Fingerprint
+- Wavelet-Domain Artifact
+- Multi-Resolution Fingerprint
+- Sub-Band Fingerprint
+- High-Frequency Wavelet Residual
+- Wavelet Coefficient Features
+- Wavelet-Packet Features
+
+Sub-band:
+- LL = Approximation
+- LH = Horizontal/Detail component (convention can vary)
+- HL = Vertical/Detail component (convention can vary)
+- HH = High-frequency detail
+
+Catatan:
+- Wavelet berguna ketika forensic analysis membutuhkan lokalisasi ruang + frekuensi.
+
+3F. LAPLACIAN / HIGH-PASS RESIDUAL
+-----------------------------------
+Istilah:
+- High-Pass Residual
+- High-Pass Filtering
+- Residual Domain
+- Laplacian Residual
+- Laplacian Pyramid
+- High-Frequency Residual
+- Shallow-Feature High-Frequency Residual
+
+Catatan:
+- Ini bukan frequency transform global seperti FFT, tetapi sering digunakan dalam frequency-aware forensic pipelines.
+
+3G. BENFORD-LAW / DCT STATISTICAL FINGERPRINT
+----------------------------------------------
+Istilah:
+- Benford's Law
+- Benford-DCT Features
+- Leading-Digit Statistics
+- DCT Coefficient Digit Distribution
+- Benford Feature Vector
+- Benford-Law Deviation
+- Digit-Frequency Signature
+
+Paper:
+"On the Use of Benford's Law to Detect GAN-generated Images"
+
+Ide:
+- Distribusi digit pertama pada quantized DCT coefficients dapat berbeda antara real dan GAN-generated content.
+- Ini merupakan statistical/spectral cue, bukan watermark.
+
+3H. SPECTRAL LEARNING METODE MODERN
+-----------------------------------
+SPAI:
+- SPAI
+- Spectral AI-Generated Image Detection
+- Masked Spectral Learning
+- Frequency Reconstruction
+- Spectral Reconstruction Similarity
+- Spectral Context Attention
+- Any-Resolution Spectral Learning
+
+MFDL:
+- Multi-Perspective Frequency Domain Learning
+- FFT branch
+- DWT branch
+- Frequency-domain feature fusion
+
+3I. DIFFUSION-SPECIFIC SPECTRAL CUES
+------------------------------------
+Metode:
+- Synthbuster
+- Fourier-Domain Artifacts
+- Spectral Analysis
+- Frequency-Domain Diffusion Detection
+
+Catatan:
+- Fourier artifact analysis pada diffusion sering menjadi baseline/branch yang berbeda dari reconstruction-based methods seperti DIRE dan AEROBLADE.
+
+------------------------------------------------------------
+4. PROACTIVE / ARTIFICIAL FINGERPRINTS
+------------------------------------------------------------
+
+DEFINISI
+--------
+Berbeda dari intrinsic fingerprint. Di sini fingerprint/watermark sengaja dibuat dan ditanam agar dapat dibawa oleh model ke output atau agar generator dapat diatribusikan.
+
+4A. ARTIFICIAL FINGERPRINTING
+-----------------------------
+ALIAS:
+- Artificial Fingerprint
+- Artificial Fingerprinting
+- Artificial GAN Fingerprint
+- Proactive Fingerprinting
+- Proactive Model Fingerprinting
+- Training-Data Fingerprinting
+- Training-Data Embedded Fingerprint
+- Model-Origin Fingerprint
+- Source-Specific Artificial Fingerprint
+- Traceable Generator Fingerprint
+- Embedded Model Fingerprint
+
+Paper fundamental:
+"Artificial Fingerprinting for Generative Models: Rooting Deepfake Attribution in Training Data"
+
+Pipeline:
+1. Buat fingerprint.
+2. Embed fingerprint ke training images.
+3. Train generative model menggunakan data berfingerprint.
+4. Fingerprint berpindah dari training data ke model.
+5. Fingerprint muncul pada generated outputs.
+6. Detector/decoder menguji keberadaan fingerprint.
+
+4B. DEEP STEGANOGRAPHY / NEURAL STEGANOGRAPHY
+---------------------------------------------
+Istilah:
+- Deep Steganography
+- Neural Steganography
+- Deep Image Steganography
+- Learned Steganography
+- Encoder-Decoder Steganography
+- Neural Watermarking
+- Deep Watermarking
+- End-to-End Watermarking
+
+Metode/keluarga terkenal:
+- HiDDeN
+- StegaStamp
+
+Catatan:
+- Deep steganography adalah mekanisme embedding, bukan otomatis nama fingerprint itu sendiri.
+- Dalam artificial fingerprinting, steganographic encoder/decoder dapat dipakai untuk menanam dan membaca source signature.
+
+4C. TRAINING-DATA WATERMARK / WATERMARK PROPAGATION
+---------------------------------------------------
+Istilah:
+- Training Data Watermarking
+- Dataset Watermarking
+- Training-Set Watermarking
+- Watermark Propagation
+- Watermark Transfer
+- Watermark Migration
+- Watermark Persistence through Generation
+- Watermark Carry-over
+- Generator-Retained Watermark
+- Training-to-Generation Watermark Transfer
+
+4D. PROMARK
+-----------
+Paper:
+"ProMark: Proactive Diffusion Watermarking for Causal Attribution"
+
+Nomenklatur:
+- Proactive Diffusion Watermarking
+- Causal Attribution
+- Training-Data Watermark
+- Imperceptible Watermark
+- Concept Watermark
+- Causal Watermark
+- Watermark Retention
+- Training-Concept Attribution
+
+Tujuan:
+- Menanam watermark yang merepresentasikan training-data concepts seperti objects, motifs, templates, artists, atau styles.
+- Melatih diffusion model agar mempertahankan watermark pada output.
+- Kehadiran watermark digunakan sebagai bukti hubungan provenance/training-data attribution.
+
+4E. MODEL WATERMARKING
+----------------------
+Istilah:
+- Model Watermarking
+- Neural Network Watermarking
+- Deep Neural Network Watermarking
+- Deep Model Watermarking
+- Generator Watermarking
+- GAN Model Watermarking
+- Generative Model Watermarking
+- Weight Watermarking
+- Activation Watermarking
+- Behavioral Watermarking
+- Trigger-Set Watermarking
+- Black-Box Watermarking
+- White-Box Watermarking
+- Remote Ownership Verification
+
+Perbedaan:
+- Weight watermarking -> fingerprint/watermark di parameter.
+- Activation watermarking -> watermark pada aktivasi internal.
+- Behavioral watermarking -> model menghasilkan perilaku/response tertentu pada trigger.
+- Output watermarking -> watermark dideteksi dari generated media.
+
+4F. STABLE SIGNATURE
+--------------------
+Nama:
+- Stable Signature
+- The Stable Signature
+- Rooting Watermarks in Latent Diffusion Models
+- Active Content Tracing
+- Latent Decoder Watermarking
+- Binary Signature
+- Generator-Embedded Signature
+- Decoder-Side Watermarking
+
+Konsep:
+- Fine-tune latent image decoder sehingga generated images membawa binary signature.
+- Watermark extractor memulihkan signature dari output.
+- Statistik digunakan untuk menentukan apakah image berasal dari generator yang diberi signature.
+
+4G. TREE-RING WATERMARKING
+--------------------------
+Nama:
+- Tree-Ring Watermarks
+- Tree-Ring Watermarking
+- Tree-Ring Fingerprints
+- Diffusion Noise Watermark
+- Latent Noise Watermark
+- Fourier-Space Watermark
+- Noise-Space Fingerprinting
+- Initial-Noise Watermark
+- Sampling-Process Fingerprint
+
+Ciri:
+- Pola ditanam pada initial noise vector.
+- Struktur watermark dibuat dalam Fourier space.
+- Dirancang agar lebih tahan terhadap convolution, crop, dilation, flip, dan rotation.
+- Deteksi dilakukan dengan inversion proses diffusion untuk memperoleh kembali noise representation.
+
+4H. GAUSSIAN SHADING
+--------------------
+Nama:
+- Gaussian Shading
+- Gaussian-Latent Watermarking
+- Performance-Lossless Diffusion Watermarking
+- Training-Free Diffusion Watermarking
+- Latent Representation Watermark
+- Gaussian Distribution Preserving Watermark
+- Plug-and-Play Diffusion Watermarking
+
+Ciri:
+- Tidak memerlukan modifikasi parameter model.
+- Tidak memerlukan training tambahan pada model target.
+- Watermark ditanam dengan mempertahankan karakteristik distribusi Gaussian dari latent/noise representation.
+
+4I. RING-ID DAN TURUNAN TREE-RING
+---------------------------------
+Istilah:
+- RingID
+- Multi-Key Identification
+- Tree-Ring-based Multi-Key Watermarking
+- Key-Free / Multi-Key Diffusion Watermarking (tergantung metode)
+- Robust Diffusion Watermarking
+
+Catatan:
+- Ini adalah keluarga pengembangan/varian watermarking, bukan nama generik untuk semua diffusion fingerprints.
+
+4J. SYNTHID
+-----------
+Istilah:
+- SynthID
+- SynthID-Image
+- SynthID-O
+- Invisible AI Watermark
+- Deep-Learning-Based Image Watermarking
+- AI Provenance Watermark
+- Deep Learning Media Provenance
+
+SynthID-Image merupakan sistem watermarking skala besar untuk imagery yang dihasilkan AI. Dokumentasi teknis/akademiknya membahas fidelity, robustness, security, threat model, dan deployment pada skala internet.
+
+4K. C2PA / CONTENT CREDENTIALS (RELATED BUT DIFFERENT)
+--------------------------------------------------------
+Istilah:
+- C2PA
+- Content Credentials
+- Cryptographic Provenance
+- Signed Metadata
+- Content Authenticity
+- Provenance Metadata
+- Media Authentication
+
+PENTING:
+- C2PA bukan intrinsic fingerprint.
+- C2PA lebih tepat disebut provenance/authenticity mechanism.
+- Fingerprint visual dan signed provenance metadata dapat digunakan bersama tetapi bukan hal yang sama.
+
+------------------------------------------------------------
+5. TOOL-BASED / DETECTOR-SPECIFIC FINGERPRINTS
+------------------------------------------------------------
+
+DEFINISI
+--------
+Kategori ini mencakup forensic representation yang diperoleh dari detector atau foundation model tertentu. Dalam paper, representasi ini kadang disebut feature, embedding, cue, latent representation, atau signature, dan tidak selalu didefinisikan sebagai "fingerprint" dalam arti strict.
+
+ALIAS:
+- Learned Forensic Representation
+- Detector Feature Representation
+- Forensic Feature Embedding
+- Detector-Specific Feature
+- Learned Synthetic Cue
+- Model-Discriminative Representation
+- Generator-Discriminative Feature
+- Feature-Space Fingerprint
+- Embedding-Space Fingerprint
+- Latent Feature Fingerprint
+- Neural Forensic Signature
+- Learned Forensic Signature
+
+5A. CLIP / VISION TRANSFORMER FEATURES
+--------------------------------------
+Istilah:
+- CLIP Features
+- CLIP-ViT Features
+- CLIP Image Embeddings
+- Vision Transformer Features
+- ViT Forensic Features
+- Foundation-Model Features
+- Vision Foundation Model Features
+- Frozen CLIP
+- Fine-Tuned CLIP
+- CLIP Linear Probe
+- CLIP-Based Synthetic Image Detection
+- CLIP-Based AIGC Detection
+- Patch-Wise CLIP Representation
+
+Paper anchor:
+"Towards Universal Fake Image Detectors That Generalize Across Generative Models"
+
+Nomenklatur/metode:
+- UniversalFakeDetect
+- UnivFD
+- Universal Fake Image Detector
+- Nearest-Neighbor Classification
+- Linear Probing
+- CLIP Feature Space
+
+Ide:
+- Menggunakan pretrained vision-language feature space yang tidak dilatih khusus untuk real-vs-fake.
+- Nearest neighbor dan linear probing dapat memberikan generalisasi lebih baik terhadap generator yang tidak dilihat saat training.
+
+5B. CLIP FORENSIC ADAPTATION
+----------------------------
+Istilah:
+- CLIP Fine-Tuning
+- CLIP LoRA
+- Parameter-Efficient Fine-Tuning
+- Feature Fusion
+- Low-Level + High-Level Feature Fusion
+- Artifact-Aware CLIP
+- Attention-Guided CLIP
+- Patch-Wise CLIP Representation
+
+Metode:
+- DeeCLIP
+- PPM-CLIP
+
+DeeCLIP terkait:
+- Low-Level + High-Level Feature Fusion
+- Triplet Loss
+- LoRA
+- Cross-Generator Detection
+
+PPM-CLIP:
+- Probabilistic Prompt Modeling
+- Patch-Wise Contrastive Learning (PWCL)
+- Adaptive Prompt Distribution
+- Conditional generative modeling over prompts
+- CLIP visual encoder
+
+5C. LANGUAGE-GUIDED FORENSIC REPRESENTATION
+--------------------------------------------
+LASTED:
+- LanguAge-guided SynThEsis Detection
+- Language-guided Synthetic Image Detection
+- Language-guided Contrastive Learning
+- Image-Text Contrastive Forensics
+- Text-Guided Forensic Representation
+
+Konsep:
+- Synthetic/real semantics dipasangkan dengan textual prompts.
+- Detection diperlakukan sebagai identification/representation problem, bukan hanya binary classification.
+
+5D. MULTILID / LOCAL INTRINSIC DIMENSIONALITY
+----------------------------------------------
+Istilah:
+- LID
+- Local Intrinsic Dimensionality
+- multiLID
+- Multi-Local Intrinsic Dimensionality
+- LID Feature Vector
+- Intrinsic-Dimension Signature
+- Latent-Manifold Geometry Features
+- Neighborhood Growth-Rate Features
+
+Paper:
+"Detecting Images Generated by Deep Diffusion Models Using Their Local Intrinsic Dimensionality"
+
+Konsep:
+- Mengukur geometri/manifold behavior dalam latent feature space.
+- multiLID mempertahankan informasi pertumbuhan jarak ke beberapa nearest neighbors, bukan hanya satu scalar statistic.
+- Cocok dikategorikan sebagai geometric/manifold forensic signature.
+
+5E. DINO / SELF-SUPERVISED REPRESENTATIONS
+-------------------------------------------
+Istilah:
+- Self-Supervised Forensic Representation
+- Self-Supervised Feature Fingerprint
+- DINO Features
+- Self-Supervised Vision Transformer Features
+- DINO-Based Representation
+- Foundation-Model Latent Fingerprint
+- Self-Supervised Synthetic Cue
+
+Catatan:
+- DINO representation dapat dipakai sebagai salah satu representational space dalam multi-space forensic methods.
+- DINO feature bukan otomatis "fingerprint" dalam definisi strict.
+
+5F. CONTRASTIVE / METRIC LEARNING FINGERPRINTS
+----------------------------------------------
+Istilah:
+- Contrastive Forensic Representation
+- Contrastive Feature Space
+- Self-Supervised Contrastive Learning
+- Supervised Contrastive Learning
+- Triplet Representation
+- Metric-Learning Fingerprint
+- Similarity-Based Fingerprint
+- Embedding-Space Attribution
+- Instance-Discrimination Features
+
+Komponen umum:
+- Triplet Loss
+- Supervised Contrastive Loss
+- Patch-Wise Contrastive Learning
+- Language-Guided Contrastive Learning
+- Siamese Network
+- Metric Learning
+
+5G. FEATURE-SPACE / NEAREST-NEIGHBOR SIGNATURES
+-----------------------------------------------
+Istilah:
+- Feature-Space Similarity
+- Embedding-Space Similarity
+- Nearest-Neighbor Forensics
+- Cosine-Similarity Attribution
+- Prototype-Based Attribution
+- Class-Centroid Representation
+- Real/Fake Feature Manifold
+- Feature Distribution Fingerprint
+
+Catatan:
+- Feature-space similarity dapat menjadi detector mechanism.
+- Jangan otomatis menyebut seluruh feature-space representation sebagai intrinsic source fingerprint.
+
+------------------------------------------------------------
+6. DIFFUSION-SPECIFIC RECONSTRUCTION FINGERPRINTS
+------------------------------------------------------------
+
+Walaupun secara konseptual dapat masuk ke intrinsic fingerprints, subfamily ini layak dipisahkan dalam literature database karena sangat sering muncul sebagai kategori tersendiri.
+
+6A. DIRE
+-------
+DIRE = DIffusion Reconstruction Error
+
+Istilah:
+- Diffusion Reconstruction Error
+- Reconstruction-Based Diffusion Detection
+- Diffusion Inversion/Reconstruction Cue
+- Reconstruction Residual
+- Diffusion Reconstruction Fingerprint
+
+Ide:
+- Input image direkonstruksi menggunakan pretrained diffusion model.
+- Perbedaan input versus reconstruction menjadi forensic representation.
+- Diffusion-generated image cenderung lebih mudah direkonstruksi oleh diffusion model yang relevan dibanding real image.
+
+6B. AEROBLADE
+------------
+AEROBLADE = Training-Free Detection of Latent Diffusion Images Using Autoencoder Reconstruction Error
+
+Istilah:
+- Autoencoder Reconstruction Error
+- AE Reconstruction Error
+- LDM Autoencoder Fingerprint
+- Latent Reconstruction Cue
+- Training-Free LDM Detection
+
+Ide:
+- Menggunakan autoencoder yang merupakan komponen inheren latent diffusion model.
+- Perbedaan reconstruction quality antara generated dan real images dipakai untuk detection.
+
+6C. SYNTHBUSTER
+---------------
+Istilah:
+- Fourier-Domain Diffusion Detection
+- Spectral Diffusion Detection
+- Fourier Artifact Detection
+- Diffusion Spectral Cue
+
+Fokus:
+- Fourier/spectral traces yang dapat membedakan diffusion-generated images dari real images.
+
+------------------------------------------------------------
+7. KLASIFIKASI SILANG: JANGAN MENCAMPURKAN ISTILAH
+------------------------------------------------------------
+
+INTRINSIC
+- Sumber: proses generasi secara alami.
+- Tidak harus ada desain watermark.
+- Contoh: GAN fingerprint, diffusion reconstruction cue, architecture-level fingerprint.
+
+CAUSAL
+- Sumber: model fingerprint yang diformulasikan dengan hubungan provenance -> trace secara kausal.
+- Fokus: content/style disentanglement, causal decoupling, counterfactual evaluation.
+- Contoh: Causal Fingerprints of AI Generative Models.
+
+SPECTRAL
+- Sumber representasi: distribusi frekuensi/spektrum.
+- Dapat menjadi intrinsic cue atau detector feature.
+- Contoh: FFT, DCT, DWT, spectral decay, high-frequency mismatch.
+
+PROACTIVE / ARTIFICIAL
+- Sumber: sinyal sengaja ditanam.
+- Contoh: Artificial Fingerprinting, ProMark, Stable Signature, Tree-Ring, Gaussian Shading, SynthID.
+
+DETECTOR-SPECIFIC
+- Sumber: representasi yang digunakan detector.
+- Contoh: CLIP, DINO, multiLID, contrastive embedding.
+- Tidak otomatis merupakan fingerprint model yang causal atau intrinsic.
+
+------------------------------------------------------------
+8. MASTER KEYWORD / LITERATURE SEARCH VOCABULARY
+------------------------------------------------------------
+
+FINGERPRINT:
+- "generative model fingerprint"
+- "generator fingerprint"
+- "GAN fingerprint"
+- "diffusion fingerprint"
+- "model fingerprint"
+- "source fingerprint"
+- "synthetic image fingerprint"
+- "generative model signature"
+- "generator signature"
+- "forensic signature"
+
+ARTIFACT / TRACE:
+- "model-specific artifact"
+- "generation artifact"
+- "synthesis artifact"
+- "forensic trace"
+- "generation trace"
+- "model-specific trace"
+- "spectral artifact"
+- "latent artifact"
+- "residual artifact"
+
+ATTRIBUTION:
+- "model attribution"
+- "generator attribution"
+- "source attribution"
+- "architecture attribution"
+- "GAN source identification"
+- "generator identification"
+- "model provenance"
+- "source tracing"
+
+INTRINSIC / PASSIVE:
+- "intrinsic fingerprint"
+- "inherent fingerprint"
+- "passive fingerprint"
+- "implicit fingerprint"
+- "architecture-level fingerprint"
+- "instance-level fingerprint"
+- "weight-level fingerprint"
+
+CAUSAL:
+- "causal fingerprint"
+- "causal attribution"
+- "causality decoupling"
+- "causal representation"
+- "causal disentanglement"
+- "semantic-invariant latent space"
+- "counterfactual fingerprint"
+- "fingerprint intervention"
+
+FREQUENCY:
+- "frequency-domain artifact"
+- "spectral fingerprint"
+- "spectral artifact"
+- "frequency bias"
+- "spectral bias"
+- "power spectrum"
+- "radial power spectrum"
+- "spectral decay"
+- "high-frequency discrepancy"
+- "ultra-high-frequency tail"
+- "Fourier fingerprint"
+- "DCT fingerprint"
+- "DWT fingerprint"
+- "wavelet fingerprint"
+- "checkerboard artifact"
+- "grid artifact"
+- "aliasing artifact"
+
+PROACTIVE:
+- "artificial fingerprinting"
+- "artificial GAN fingerprint"
+- "proactive fingerprinting"
+- "training-data watermark"
+- "dataset watermarking"
+- "watermark propagation"
+- "watermark transfer"
+- "generative model watermark"
+- "generator watermark"
+- "latent watermark"
+- "diffusion watermark"
+- "neural watermark"
+- "deep watermarking"
+- "deep steganography"
+
+DETECTOR-SPECIFIC:
+- "CLIP forensic features"
+- "CLIP-ViT synthetic image detection"
+- "ViT forensic representation"
+- "foundation model features"
+- "contrastive forensic representation"
+- "self-supervised forensic features"
+- "DINO synthetic image detection"
+- "LID synthetic image detection"
+- "multiLID diffusion detection"
+- "feature-space attribution"
+
+------------------------------------------------------------
+9. ANCHOR PAPERS / METHODS YANG PALING PENTING
+------------------------------------------------------------
+
+1. Do GANs Leave Artificial Fingerprints?
+   -> foundational GAN fingerprint / PRNU-inspired residual
+
+2. Attributing Fake Images to GANs: Learning and Analyzing GAN Fingerprints
+   -> learned GAN fingerprint / source attribution
+
+3. Artificial Fingerprinting for Generative Models: Rooting Deepfake Attribution in Training Data
+   -> proactive/artificial fingerprint transfer from training data
+
+4. Leveraging Frequency Analysis for Deep Fake Image Recognition
+   -> frequency-domain / DCT / spectral cues
+
+5. Watch Your Up-Convolution: CNN Based Generative Deep Neural Networks Are Failing to Reproduce Spectral Distributions
+   -> upsampling, spectral mismatch, high-frequency artifacts
+
+6. On the Frequency Bias of Generative Models
+   -> frequency bias / spectral characteristics of generative models
+
+7. Deepfake Network Architecture Attribution
+   -> DNA-Det / architecture-level attribution
+
+8. Learning to Disentangle GAN Fingerprint for Fake Image Attribution
+   -> GFD-Net / content-irrelevant fingerprint
+
+9. Disentangling Different Levels of GAN Fingerprints for Task-Specific Forensics
+   -> architecture-level vs instance-level fingerprint
+
+10. DIRE for Diffusion-Generated Image Detection
+    -> diffusion reconstruction error / DIRE
+
+11. AEROBLADE: Training-Free Detection of Latent Diffusion Images Using Autoencoder Reconstruction Error
+    -> LDM autoencoder reconstruction fingerprint
+
+12. Detecting Images Generated by Deep Diffusion Models Using Their Local Intrinsic Dimensionality
+    -> LID / multiLID manifold signature
+
+13. ManiFPT: Defining and Analyzing Fingerprints of Generative Models
+    -> formalization of artifact/fingerprint and model attribution
+
+14. Causal Fingerprints of AI Generative Models
+    -> causal fingerprint / causality decoupling / semantic-invariant latent space / counterfactual source anonymization
+
+15. ProMark: Proactive Diffusion Watermarking for Causal Attribution
+    -> proactive training-data watermarking for causal attribution
+
+16. The Stable Signature: Rooting Watermarks in Latent Diffusion Models
+    -> latent decoder watermark / binary model signature
+
+17. Tree-Ring Watermarks: Fingerprints for Diffusion Images that are Invisible and Robust
+    -> Fourier-structured initial-noise watermark
+
+18. Gaussian Shading: Provable Performance-Lossless Image Watermarking for Diffusion Models
+    -> training-free, plug-and-play diffusion watermark
+
+19. Towards Universal Fake Image Detectors That Generalize Across Generative Models
+    -> CLIP feature-space / nearest-neighbor / linear probing / universal detection
+
+20. Generalizable Synthetic Image Detection via Language-guided Contrastive Learning (LASTED line of work)
+    -> language-guided contrastive representation
+
+21. Any-Resolution AI-Generated Image Detection by Spectral Learning (SPAI)
+    -> masked spectral learning / spectral reconstruction similarity / spectral context attention
+
+22. PPM-CLIP: Probabilistic Prompt Modeling for Generalizable AI-Generated Image Detection
+    -> probabilistic prompt modeling / patch-wise contrastive learning / CLIP
+
+23. SynthID-Image: Image Watermarking at Internet Scale
+    -> large-scale deep-learning watermarking / provenance
+
+------------------------------------------------------------
+10. PRAKTIK TERBAIK UNTUK DATABASE RISET FORENSIK
+------------------------------------------------------------
+
+Untuk setiap paper/metode, simpan field:
+- Paper Title
+- Authors
+- Year
+- Venue
+- DOI/ArXiv
+- Generator Family (GAN / Diffusion / LDM / Autoregressive / Unknown)
+- Fingerprint Type
+- Passive vs Proactive
+- Intrinsic vs Detector-Specific
+- Spatial / Frequency / Latent / Semantic / Causal Domain
+- Representation
+- Extraction Method
+- Training-Free vs Trained
+- White-Box vs Black-Box
+- Attribution vs Detection vs Provenance
+- Robustness to JPEG
+- Robustness to Resize
+- Robustness to Crop
+- Robustness to Blur
+- Robustness to Noise
+- Robustness to Adversarial Attack
+- Cross-Generator Generalization
+- Open-World Capability
+- Source Code Availability
+- Dataset
+- Main Limitations
+
+------------------------------------------------------------
+11. RINGKASAN PALING PENTING
+------------------------------------------------------------
+
+Taxonomy yang paling aman digunakan:
+
+A. INTRINSIC / PASSIVE
+   - model fingerprint
+   - GAN fingerprint
+   - diffusion fingerprint
+   - architecture-level
+   - instance-level
+   - checkpoint/weight-level
+   - residual/noise fingerprint
+   - reconstruction fingerprint
+
+B. CAUSAL
+   - causal fingerprint
+   - causality-decoupled fingerprint
+   - semantic-invariant latent space
+   - causal representation
+   - counterfactual fingerprint
+   - fingerprint intervention
+   - source anonymization
+
+C. SPECTRAL
+   - Fourier / DFT / FFT
+   - DCT
+   - DWT / wavelet
+   - power spectrum
+   - spectral decay
+   - high-frequency residual
+   - checkerboard / grid
+   - aliasing
+   - Benford-DCT
+   - spectral tail anomaly
+
+D. PROACTIVE / ARTIFICIAL
+   - artificial fingerprinting
+   - training-data fingerprint
+   - training-data watermark
+   - deep steganography
+   - neural watermark
+   - model watermark
+   - Stable Signature
+   - Tree-Ring
+   - Gaussian Shading
+   - ProMark
+   - SynthID-Image
+
+E. DETECTOR / REPRESENTATION-SPECIFIC
+   - CLIP-ViT
+   - ViT
+   - DINO
+   - contrastive representation
+   - triplet embedding
+   - feature-space fingerprint
+   - multiLID
+   - nearest-neighbor forensic signature
+   - foundation-model representation
+
+------------------------------------------------------------
+APA STYLE SOURCES — APA 7TH EDITION
+------------------------------------------------------------
+
+[1]
+Frank, J., Eisenhofer, T., Schönherr, L., Fischer, A., Kolossa, D., & Holz, T. (2020). Leveraging frequency analysis for deep fake image recognition. In Proceedings of the 37th International Conference on Machine Learning (Vol. 119, pp. 3247–3258). PMLR. https://proceedings.mlr.press/v119/frank20a.html
+
+[2]
+Durall, R., Keuper, M., & Keuper, J. (2020). Watch your up-convolution: CNN based generative deep neural networks are failing to reproduce spectral distributions. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) (pp. 7890–7899). IEEE/CVF. https://openaccess.thecvf.com/content_CVPR_2020/html/Durall_Watch_Your_Up-Convolution_CNN_Based_Generative_Deep_Neural_Networks_Are_CVPR_2020_paper.html
+
+[3]
+Yu, N., Davis, L. S., & Fritz, M. (2019). Attributing fake images to GANs: Learning and analyzing GAN fingerprints. In Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV) (pp. 7556–7566). IEEE/CVF. https://doi.org/10.1109/ICCV.2019.00765
+
+[4]
+Yu, N., Skripniuk, V., Abdelnabi, S., & Fritz, M. (2021). Artificial fingerprinting for generative models: Rooting deepfake attribution in training data. In Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV) (pp. 14448–14457). IEEE/CVF. https://openaccess.thecvf.com/content/ICCV2021/html/Yu_Artificial_Fingerprinting_for_Generative_Models_Rooting_Deepfake_Attribution_in_Training_ICCV_2021_paper.html
+
+[5]
+Yang, T., Huang, Z., Cao, J., Li, L., & Li, X. (2022). Deepfake network architecture attribution. Proceedings of the AAAI Conference on Artificial Intelligence, 36(4), 4662–4670. https://doi.org/10.1609/aaai.v36i4.20391
+
+[6]
+Yang, T., Cao, J., Sheng, Q., Li, L., Ji, J., Li, X., & Tang, S. (2021). Learning to disentangle GAN fingerprint for fake image attribution. arXiv. https://doi.org/10.48550/arXiv.2106.08749
+
+[7]
+Liu, C., Zhu, T., Zhao, Y., Zhang, J., & Zhou, W. (2024). Disentangling different levels of GAN fingerprints for task-specific forensics. Computer Standards & Interfaces, 89, 103825. https://doi.org/10.1016/j.csi.2023.103825
+
+[8]
+Wang, Z., Bao, J., Zhou, W., Wang, W., Hu, H., Chen, H., & Li, H. (2023). DIRE for diffusion-generated image detection. In Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV) (pp. 22445–22455). IEEE/CVF. https://doi.org/10.1109/ICCV51070.2023.02051
+
+[9]
+Ricker, J., Lukovnikov, D., & Fischer, A. (2024). AEROBLADE: Training-free detection of latent diffusion images using autoencoder reconstruction error. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) (pp. 9130–9140). IEEE/CVF. https://openaccess.thecvf.com/content/CVPR2024/html/Ricker_AEROBLADE_Training-Free_Detection_of_Latent_Diffusion_Images_Using_Autoencoder_Reconstruction_CVPR_2024_paper.html
+
+[10]
+Lorenz, P., Durall, R. L., & Keuper, J. (2023). Detecting images generated by deep diffusion models using their local intrinsic dimensionality. In Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV) Workshops (pp. 448–459). IEEE/CVF. https://openaccess.thecvf.com/ICCV2023_workshops/DFAD
+
+[11]
+Song, H. J., Khayatkhoei, M., & AbdAlmageed, W. (2024). ManiFPT: Defining and analyzing fingerprints of generative models. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) (pp. 10791–10801). IEEE/CVF. https://openaccess.thecvf.com/content/CVPR2024/html/Song_ManiFPT_Defining_and_Analyzing_Fingerprints_of_Generative_Models_CVPR_2024_paper.html
+
+[12]
+Xu, H., Liu, C., Zhu, C., Wang, M., Qu, Y., & Gao, L. (2025). Causal fingerprints of AI generative models. arXiv. https://doi.org/10.48550/arXiv.2509.15406
+
+[13]
+Asnani, V., Collomosse, J., Bui, T., Liu, X., & Agarwal, S. (2024). ProMark: Proactive diffusion watermarking for causal attribution. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) (pp. 10802–10811). IEEE/CVF. https://openaccess.thecvf.com/content/CVPR2024/html/Asnani_ProMark_Proactive_Diffusion_Watermarking_for_Causal_Attribution_CVPR_2024_paper.html
+
+[14]
+Fernandez, P., Couairon, G., Jégou, H., Douze, M., & Furon, T. (2023). The stable signature: Rooting watermarks in latent diffusion models. In Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV) (pp. 22466–22477). IEEE/CVF. https://doi.org/10.1109/ICCV51070.2023.02053
+
+[15]
+Wen, Y., Kirchenbauer, J., Geiping, J., & Goldstein, T. (2023). Tree-ring watermarks: Fingerprints for diffusion images that are invisible and robust. arXiv. https://doi.org/10.48550/arXiv.2305.20030
+
+[16]
+Yang, Z., Zeng, K., Chen, K., Fang, H., Zhang, W., & Yu, N. (2024). Gaussian shading: Provable performance-lossless image watermarking for diffusion models. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR). IEEE/CVF. https://openaccess.thecvf.com/content/CVPR2024/html/Yang_Gaussian_Shading_Provable_Performance-Lossless_Image_Watermarking_for_Diffusion_Models_CVPR_2024_paper.html
+
+[17]
+Ojha, U., Li, Y., & Lee, Y. J. (2023). Towards universal fake image detectors that generalize across generative models. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) (pp. 24480–24489). IEEE/CVF. https://doi.org/10.1109/CVPR52729.2023.02345
+
+[18]
+Wang, X., Lai, Y., Luo, Z., & Liu, Z. (2026). PPM-CLIP: Probabilistic prompt modeling for generalizable AI-generated image detection. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) (pp. 21316–21325). IEEE/CVF. https://openaccess.thecvf.com/content/CVPR2026/html/Wang_PPM-CLIP_Probabilistic_Prompt_Modeling_for_Generalizable_AI-Generated_Image_Detection_CVPR_2026_paper.html
+
+[19]
+Wu, H., Zhou, J., & Zhang, S. (2025). Generalizable synthetic image detection via language-guided contrastive learning. IEEE Transactions on Artificial Intelligence, 1–11. https://doi.org/10.1109/TAI.2025.3641104
+
+[20]
+Karageorgiou, D., Papadopoulos, S., Kompatsiaris, I., & Gavves, E. (2025). Any-resolution AI-generated image detection by spectral learning. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) (pp. 18706–18717). IEEE/CVF. https://openaccess.thecvf.com/content/CVPR2025/html/Karageorgiou_Any-Resolution_AI-Generated_Image_Detection_by_Spectral_Learning_CVPR_2025_paper.html
+
+[21]
+Gowal, S., Bunel, R., Stimberg, F., Stutz, D., Ortiz-Jiménez, G., Kouridi, C., Vecerik, M., Hayes, J., Rebuffi, S.-A., Bernard, P., Gamble, C., Horváth, M. Z., Kaczmarczyck, F., Kaskasoli, A., Petrov, A., Shumailov, I., Thotakuri, M., Wiles, O., Yung, J., Ahmed, Z., Martin, V., Rosen, S., Savčak, C., Senoner, A., Vyas, N., & Kohli, P. (2025). SynthID-Image: Image watermarking at internet scale. arXiv. https://doi.org/10.48550/arXiv.2510.09263
+
+------------------------------------------------------------
+SUMBER UTAMA UNTUK VERIFIKASI
+------------------------------------------------------------
+- IEEE/CVF Open Access
+- Proceedings of Machine Learning Research (PMLR)
+- AAAI Proceedings
+- arXiv
+- DBLP
+- IEEE Xplore
+- ScienceDirect
+- Official author/project repositories where applicable
+
+CATATAN AKHIR
+==============
+Daftar ini sengaja membedakan istilah baku, alias yang lazim, nama metode, dan istilah konseptual. Untuk literature review formal, gunakan nama paper/metode sebagai identifier utama, sedangkan alias digunakan sebagai expanded search vocabulary. Ini mencegah "fingerprint", "artifact", "watermark", "provenance", dan "detector feature" tercampur menjadi satu kelas.

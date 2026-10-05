@@ -1,0 +1,13 @@
+# Build and test toolchain (exact pins, verified for win_amd64 / CPython 3.11-3.14).
+pyinstaller==6.17.0
+pyinstaller-hooks-contrib==2026.7
+altgraph==0.17.5
+packaging==26.3
+setuptools==84.0.0
+pefile==2023.2.7 ; sys_platform == "win32"
+pywin32-ctypes==0.2.3 ; sys_platform == "win32"
+pytest==8.4.2
+iniconfig==2.3.0
+pluggy==1.6.0
+Pygments==2.21.0
+colorama==0.4.6 ; sys_platform == "win32"
