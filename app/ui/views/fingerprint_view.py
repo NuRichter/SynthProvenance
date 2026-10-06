@@ -181,7 +181,7 @@ class FingerprintLabView(View):
         lay.addWidget(gw)
         lay.addWidget(label("Recovery & reconstruction (vs ground truth)", "PanelTitle"))
         lay.addWidget(self.sep_kv)
-        self.tabs.addTab(w, "Separation & Reconstruction")
+        self.tabs.addTab(w, "Separation && Reconstruction")  # "&&": a single "&" is a Qt mnemonic
 
     # ---- Surrogate ground-truth tab
     def _build_surrogate(self) -> None:

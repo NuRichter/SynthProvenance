@@ -83,3 +83,19 @@ def test_gui_views_render_after_experiment(fx):
     assert not REFRESH_ERRORS, REFRESH_ERRORS
     assert not win.errors, win.errors
     win.close()
+
+
+def test_tab_labels_have_no_stray_mnemonic():
+    """A single "&" in a tab label is a Qt mnemonic: "A & B" renders as "A _B". Literal ampersands need "&&"."""
+    from PySide6.QtWidgets import QApplication, QTabWidget
+    from app.ui.controller import AppController
+    from app.ui.main_window import MainWindow
+
+    app = QApplication.instance() or QApplication([])
+    win = MainWindow(AppController(), quiet=True)
+    labels = [t.tabText(i) for t in win.findChildren(QTabWidget) for i in range(t.count())]
+    assert labels
+    stray = [s for s in labels if "&" in s.replace("&&", "")]
+    assert not stray, stray
+    win.close()
+    app.processEvents()

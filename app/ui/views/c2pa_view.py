@@ -39,7 +39,7 @@ class C2PAView(View):
         self.actions = DataTable(["Action", "digitalSourceType", "softwareAgent", "When", "Description"])
         self.ingredients = DataTable(["Title", "Format", "Relationship", "Has manifest", "Instance ID"])
         self.assertions = DataTable(["Label", "Content type", "Bytes"])
-        inner.addTab(self.m_kv, "Claim & Signature")
+        inner.addTab(self.m_kv, "Claim && Signature")  # "&&": a single "&" is a Qt mnemonic
         inner.addTab(self.actions, "Actions")
         inner.addTab(self.ingredients, "Ingredients")
         inner.addTab(self.assertions, "Assertions")

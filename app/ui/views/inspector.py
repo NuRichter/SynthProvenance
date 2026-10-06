@@ -24,7 +24,7 @@ class InspectorView(View):
         super().__init__(ctl, win)
         self.tabs = QTabWidget()
         self.file_kv = KVTable()
-        self.tabs.addTab(self.file_kv, "File & Hashes")
+        self.tabs.addTab(self.file_kv, "File && Hashes")  # "&&": a single "&" is a Qt mnemonic
         mw = QWidget()
         ml = QVBoxLayout(mw)
         ml.setContentsMargins(0, 6, 0, 0)
