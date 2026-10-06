@@ -1,7 +1,6 @@
 """Theme engine: every theme applies (presentation only), state colours resolve, setting persists."""
 from __future__ import annotations
 
-import pytest
 
 
 def _app():

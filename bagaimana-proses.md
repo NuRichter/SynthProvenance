@@ -592,6 +592,27 @@ WE MEASURE. WE CHALLENGE. WE REPRODUCE. WE DOCUMENT.**
 
 ---
 
+## 21c. Skenario Q3 — Upgrade v6 (execution matrix, import Markdown, tema)
+
+- **Taksonomi → stage dapat dieksekusi.** `data/fingerprint_execution_matrix.json` + `docs/UPGRADE_V6_IMPLEMENTATION_AUDIT.md`
+  (dibangkitkan `scripts/build_execution_matrix.py`) memetakan tiap metode (64) ke keluarga fingerprint, representasi,
+  dan flag kapabilitas (CAN_ANALYZE/ESTIMATE/SEPARATE/RECONSTRUCT/VALIDATE). Kesiapan dari registry, bukan karena
+  muncul di dropdown; `test_execution_matrix_is_bundled_and_consistent` memverifikasi cocok dengan registry live.
+- **TruthScan archive (Markdown).** `ExternalResult.from_markdown` mengimpor arsip riset sebagai **konteks metodologis
+  saja** (reference-only; direction UNKNOWN; mengekstrak documented stages/fields + distingsi FAKTA/INFERENSI + caveat
+  "99%+ tidak tervalidasi independen"). TIDAK pernah menyimpulkan skor per-gambar dari teks riset umum (v6 §36).
+  `from_csv` juga ditambahkan. Arsip bundel: `TruthScan Archives/…`; dok `docs/RESEARCH_SOURCES_V6.md`,
+  `docs/TRUTHSCAN_RESEARCH.md`.
+- **Tema (15).** Engine tema berbasis peran (`app/ui/themes.py` + `app/ui/theme.py`): Dark/Light Laboratory, Neon Blue,
+  Neon Yellow, Arctic Cyan, Aurora, Graphite, Ivory, Ocean, Forest, Sunset, Violet, Rose, Solar, Paper. Dipilih di
+  Expert Settings, diterapkan langsung (live) + persisten (`theme`); presentasi saja. Easy Mode tetap tampilan light
+  khususnya.
+- **Easy OUTPUT cards** di-relabel: **PROVENANCE · FINGERPRINT · PIXEL INTEGRITY** (v6 §24).
+- **Verifikasi EXE** menambah `--smoke-cross` (studi cross-detector lengkap dalam EXE: import external + arsip Markdown,
+  banding dengan evidence lokal, ekspor laporan, original unchanged, LOCAL-ONLY).
+
+---
+
 ## 22. Skenario R — Research Wizard (7 langkah)
 
 ```
@@ -680,7 +701,7 @@ Verifikasi stage 7 MENJALANKAN EXE:
                                      RUN ANOTHER, lalu SAVE & RESTART → EXE baru harus membuka MainWindow/EXPERT)
 Output: dist\SynthProvenance\SynthProvenance.exe
 ```
-Status terakhir: **154 tes lulus, 1 skip** (26 tes Easy Mode + 13 tes Cross-Detector baru); self-test (11 cek, +easy_mode_pipeline +cross_detector_lab), smoke Expert (17 view termasuk TruthScan Cross-Detector Lab), smoke Easy +
+Status terakhir: **suite lulus (exit 0)** (Easy Mode + Cross-Detector + tema + execution-matrix tests); self-test (11 cek, +easy_mode_pipeline +cross_detector_lab), smoke Expert (17 view termasuk TruthScan Cross-Detector Lab), smoke Easy, smoke Cross-Detector +
 SAVE & RESTART exit 0; EXE v2.1.0 terverifikasi, plus uji GUI nyata via Windows UI Automation (Expert → Easy → PILIH →
 RUN → OUTPUT → SAVE RESULT → Easy → Expert).
 
